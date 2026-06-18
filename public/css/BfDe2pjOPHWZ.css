@@ -328,6 +328,10 @@ a {
   transition: opacity 180ms ease, transform 180ms ease;
 }
 
+.gallery-arrow svg {
+  pointer-events: none;
+}
+
 .gallery-main:hover .gallery-arrow,
 .gallery-arrow:focus-visible {
   opacity: 1;
