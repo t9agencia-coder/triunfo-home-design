@@ -69,8 +69,12 @@ export default function Home() {
               <div className="gallery-main">
                 <img id="main-product-image" src="/images/dYdvdqs6VrAy.png" alt="Armários FlexHome grafite e branco" />
                 <span className="badge badge-accent">Frete grátis</span>
-                <button className="gallery-arrow gallery-prev" id="gallery-prev" aria-label="Imagem anterior">9</button>
-                <button className="gallery-arrow gallery-next" id="gallery-next" aria-label="Próxima imagem">:</button>
+                <button className="gallery-arrow gallery-prev" id="gallery-prev" aria-label="Imagem anterior">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button className="gallery-arrow gallery-next" id="gallery-next" aria-label="Próxima imagem">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
               </div>
               <div className="thumbnails" id="thumbnails" aria-label="Fotos do produto"></div>
             </div>

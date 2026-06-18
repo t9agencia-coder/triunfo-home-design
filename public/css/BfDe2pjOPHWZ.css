@@ -286,10 +286,6 @@ a {
   transition: opacity 180ms ease, transform 500ms ease;
 }
 
-.gallery-main:hover > img {
-  transform: scale(1.025);
-}
-
 .badge {
   position: absolute;
   top: 16px;
@@ -317,14 +313,16 @@ a {
   top: 50%;
   width: 44px;
   height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--ink);
   border: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 32px;
-  line-height: 1;
+  cursor: pointer;
   opacity: 0;
   transform: translateY(-50%);
   transition: opacity 180ms ease, transform 180ms ease;
