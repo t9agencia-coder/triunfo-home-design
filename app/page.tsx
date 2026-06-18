@@ -76,7 +76,26 @@ export default function Home() {
                   <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
               </div>
-              <div className="thumbnails" id="thumbnails" aria-label="Fotos do produto"></div>
+              <div className="thumbnails" id="thumbnails" aria-label="Fotos do produto">
+                <button type="button" className="thumbnail active" data-image-index="0" aria-label="Armários FlexHome grafite e branco">
+                  <img src="/images/dYdvdqs6VrAy.png" alt="" />
+                </button>
+                <button type="button" className="thumbnail" data-image-index="1" aria-label="Armário FlexHome — foto 2">
+                  <img src="/images/armario-2.png" alt="" />
+                </button>
+                <button type="button" className="thumbnail" data-image-index="2" aria-label="Armário FlexHome — foto 3">
+                  <img src="/images/armario-3.png" alt="" />
+                </button>
+                <button type="button" className="thumbnail" data-image-index="3" aria-label="Armário FlexHome — foto 4">
+                  <img src="/images/armario-4.png" alt="" />
+                </button>
+                <button type="button" className="thumbnail" data-image-index="4" aria-label="Armário FlexHome — foto 5">
+                  <img src="/images/armario-5.png" alt="" />
+                </button>
+                <button type="button" className="thumbnail" data-image-index="5" aria-label="Armário FlexHome — foto 6">
+                  <img src="/images/armario-6.png" alt="" />
+                </button>
+              </div>
             </div>
 
             <div className="product-info">
@@ -618,8 +637,8 @@ export default function Home() {
       </div>
 
       <div className="toast" id="toast" role="status" aria-live="polite"></div>
-      <script src="/js/AxVL7LwBujgu.js?v=2" defer></script>
-      <script src="/js/yFVPl407oWCP.js?v=2" defer></script>
+      <script src="/js/AxVL7LwBujgu.js?v=3" defer></script>
+      <script src="/js/yFVPl407oWCP.js?v=3" defer></script>
     </>
   );
 }

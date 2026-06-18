@@ -3,11 +3,11 @@
 
   var galleryImages = [
     { name: "Armários FlexHome grafite e branco", image: "/images/dYdvdqs6VrAy.png" },
-    { name: "Armário FlexHome — foto 2", image: "/images/armario-2.webp" },
-    { name: "Armário FlexHome — foto 3", image: "/images/armario-3.webp" },
-    { name: "Armário FlexHome — foto 4", image: "/images/armario-4.webp" },
-    { name: "Armário FlexHome — foto 5", image: "/images/armario-5.webp" },
-    { name: "Armário FlexHome — foto 6", image: "/images/armario-6.webp" }
+    { name: "Armário FlexHome — foto 2", image: "/images/armario-2.png" },
+    { name: "Armário FlexHome — foto 3", image: "/images/armario-3.png" },
+    { name: "Armário FlexHome — foto 4", image: "/images/armario-4.png" },
+    { name: "Armário FlexHome — foto 5", image: "/images/armario-5.png" },
+    { name: "Armário FlexHome — foto 6", image: "/images/armario-6.png" }
   ];
 
   var selection = {
@@ -38,17 +38,31 @@
     });
   }
 
-  function buildGalleryControls() {
-    galleryImages.forEach(function (image, index) {
-      var thumb = document.createElement("button");
-      thumb.type = "button";
-      thumb.className = "thumbnail" + (index === 0 ? " active" : "");
-      thumb.dataset.imageIndex = String(index);
-      thumb.setAttribute("aria-label", image.name);
-      thumb.innerHTML = '<img src="' + image.image + '" alt="' + image.name + '">';
+  function setupGalleryControls() {
+    var thumbs = document.querySelectorAll("#thumbnails .thumbnail");
+    thumbs.forEach(function (thumb, index) {
       thumb.addEventListener("click", function () { setImage(index); });
-      thumbnails.appendChild(thumb);
     });
+
+    var galleryMain = document.querySelector(".gallery-main");
+    var touchStartX = 0;
+    var touchEndX = 0;
+
+    galleryMain.addEventListener("touchstart", function (e) {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    galleryMain.addEventListener("touchend", function (e) {
+      touchEndX = e.changedTouches[0].screenX;
+      var diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) {
+          setImage((selection.imageIndex + 1) % galleryImages.length);
+        } else {
+          setImage(selection.imageIndex === 0 ? galleryImages.length - 1 : selection.imageIndex - 1);
+        }
+      }
+    }, { passive: true });
   }
 
   function buildReviewsPagination() {
@@ -223,7 +237,7 @@
     });
   }
 
-  buildGalleryControls();
+  setupGalleryControls();
   buildReviewsPagination();
   document.getElementById("footer-year").textContent = new Date().getFullYear();
   document.getElementById("offer-color-selector").hidden = false;
