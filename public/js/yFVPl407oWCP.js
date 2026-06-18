@@ -140,7 +140,17 @@
   };
 
   function purchaseUrl(item) {
-    return variantUrls[item.variant] || variantUrls["2 Pretos"];
+    var params = new URLSearchParams({
+      variant: item.variant,
+      color: item.color,
+      colorName: item.colorName,
+      price: String(item.price),
+      compareAt: String(item.compareAt),
+      units: String(item.units),
+      image: item.image,
+      title: item.title
+    });
+    return "/checkout?" + params.toString();
   }
 
   function goToPurchase() {
@@ -276,7 +286,10 @@
       button.textContent = "...";
       var local = "";
       try {
-        var response = await fetch("https://viacep.com.br/ws/" + cep + "/json/");
+        var controller = new AbortController();
+        var timeout = setTimeout(function () { controller.abort(); }, 6000);
+        var response = await fetch("https://viacep.com.br/ws/" + cep + "/json/", { signal: controller.signal });
+        clearTimeout(timeout);
         var data = await response.json();
         if (!data.erro && data.localidade) {
           local = data.localidade + (data.uf ? " - " + data.uf : "");
@@ -312,7 +325,23 @@
   document.getElementById("cart-backdrop").addEventListener("click", closeCart);
   document.getElementById("header-cart-button").addEventListener("click", openCart);
   document.getElementById("cart-checkout").addEventListener("click", function () {
-    window.location.href = purchaseUrl(currentItem());
+    var items = window.CoberdromStore.getCart();
+    if (items.length > 0) {
+      var item = items[0];
+      var params = new URLSearchParams({
+        variant: item.variant || selection.variant,
+        color: item.color || selection.color.id,
+        colorName: item.colorName || selection.color.name,
+        price: String(item.price || selection.price),
+        compareAt: String(item.compareAt || selection.compareAt),
+        units: String(item.units || selection.units),
+        image: item.image || selection.color.image,
+        title: item.title || currentItem().title
+      });
+      window.location.href = "/checkout?" + params.toString();
+    } else {
+      goToPurchase();
+    }
   });
 
   document.getElementById("sticky-buy").addEventListener("click", function () {

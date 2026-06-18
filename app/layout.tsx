@@ -37,11 +37,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
-        {children}
-        <script src="/js/AxVL7LwBujgu.js" defer></script>
-        <script src="/js/yFVPl407oWCP.js" defer></script>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
