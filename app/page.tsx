@@ -66,20 +66,20 @@ export default function Home() {
           <div className="product-layout container">
             <div className="gallery">
               <p className="breadcrumb gallery-breadcrumb">Casa / Organização / Armários</p>
-              <div className="gallery-main" id="gallery-main">
-                <img id="main-product-image" src="/images/dYdvdqs6VrAy.png" alt="Armários FlexHome grafite e branco" />
-                <span className="badge badge-accent">Frete grátis</span>
-                <button className="gallery-arrow gallery-prev" id="gallery-prev" aria-label="Imagem anterior"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
-                <button className="gallery-arrow gallery-next" id="gallery-next" aria-label="Próxima imagem"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"></path></svg></button>
-              </div>
-              <div className="thumbnails" id="thumbnails" aria-label="Fotos do produto">
-                <button type="button" className="thumbnail active" data-image-index="0" aria-label="Armários FlexHome grafite e branco"><img src="/images/dYdvdqs6VrAy.png" alt="" /></button>
-                <button type="button" className="thumbnail" data-image-index="1" aria-label="Armário FlexHome — foto 2"><img src="/images/armario-2.png" alt="" /></button>
-                <button type="button" className="thumbnail" data-image-index="2" aria-label="Armário FlexHome — foto 3"><img src="/images/armario-3.png" alt="" /></button>
-                <button type="button" className="thumbnail" data-image-index="3" aria-label="Armário FlexHome — foto 4"><img src="/images/armario-4.png" alt="" /></button>
-                <button type="button" className="thumbnail" data-image-index="4" aria-label="Armário FlexHome — foto 5"><img src="/images/armario-5.png" alt="" /></button>
-                <button type="button" className="thumbnail" data-image-index="5" aria-label="Armário FlexHome — foto 6"><img src="/images/armario-6.png" alt="" /></button>
-              </div>
+              <div className="gallery-main" id="gallery-main" dangerouslySetInnerHTML={{
+                __html: `<img id="main-product-image" src="/images/dYdvdqs6VrAy.png" alt="Arm\u00e1rios FlexHome grafite e branco" />
+                <span class="badge badge-accent">Frete gr\u00e1tis</span>
+                <button class="gallery-arrow gallery-prev" id="gallery-prev" onclick="__prev()" aria-label="Imagem anterior"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+                <button class="gallery-arrow gallery-next" id="gallery-next" onclick="__next()" aria-label="Pr\u00f3xima imagem"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></button>`
+              }} />
+              <div className="thumbnails" id="thumbnails" aria-label="Fotos do produto" dangerouslySetInnerHTML={{
+                __html: `<button type="button" class="thumbnail active" onclick="__go(0)" aria-label="Arm\u00e1rios FlexHome grafite e branco"><img src="/images/dYdvdqs6VrAy.png" alt="" /></button>
+                <button type="button" class="thumbnail" onclick="__go(1)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 2"><img src="/images/armario-2.png" alt="" /></button>
+                <button type="button" class="thumbnail" onclick="__go(2)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 3"><img src="/images/armario-3.png" alt="" /></button>
+                <button type="button" class="thumbnail" onclick="__go(3)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 4"><img src="/images/armario-4.png" alt="" /></button>
+                <button type="button" class="thumbnail" onclick="__go(4)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 5"><img src="/images/armario-5.png" alt="" /></button>
+                <button type="button" class="thumbnail" onclick="__go(5)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 6"><img src="/images/armario-6.png" alt="" /></button>`
+              }} />
             </div>
 
             <div className="product-info">
@@ -128,7 +128,7 @@ export default function Home() {
               <p className="price-savings">💰 Você economiza <strong>R$ 109,90</strong> nesta oferta</p>
 
               <div className="product-actions">
-                <button className="button button-primary button-large" id="buy-now">COMPRAR AGORA</button>
+                <a className="button button-primary button-large" id="buy-now" href="/checkout?color=grafite-branco&variant=2%20Pretos&price=109.90&compareAt=219.80&units=2">COMPRAR AGORA</a>
               </div>
 
               <div className="shipping-calc">
@@ -140,10 +140,12 @@ export default function Home() {
                   </svg>
                   Calcular frete e prazo de entrega
                 </label>
-                <div className="shipping-calc-row">
-                  <input id="cep-calc" type="text" inputMode="numeric" autoComplete="postal-code" placeholder="Digite seu CEP" maxLength={9} />
-                  <button type="button" id="cep-calc-btn">Calcular</button>
-                </div>
+                <div dangerouslySetInnerHTML={{
+                  __html: `<div class="shipping-calc-row">
+                  <input id="cep-calc" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="Digite seu CEP" maxlength="9" oninput="var r=(__d(this.value)||'').slice(0,8);this.value=r.replace(/^(\d{5})(\d)/,'$1-$2')" onkeydown="if(event.key==='Enter')__cepCalc()" />
+                  <button type="button" id="cep-calc-btn" onclick="__cepCalc()">Calcular</button>
+                  </div>`
+                }} />
                 <a className="shipping-calc-help" href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer">Não sei meu CEP</a>
                 <div className="shipping-calc-result" id="shipping-result" hidden></div>
               </div>
@@ -605,7 +607,7 @@ export default function Home() {
       <div className="sticky-purchase" id="sticky-purchase" aria-hidden="true">
         <div className="container">
           <div><strong>FlexHome - Armário Multifuncional</strong><span><s>R$ 219,80</s> R$ 109,90</span></div>
-          <button className="button button-primary" id="sticky-buy">COMPRAR AGORA</button>
+          <a className="button button-primary" id="sticky-buy" href="/checkout?color=grafite-branco&variant=2%20Pretos&price=109.90&compareAt=219.80&units=2">COMPRAR AGORA</a>
         </div>
       </div>
 
@@ -625,6 +627,26 @@ export default function Home() {
       </div>
 
       <div className="toast" id="toast" role="status" aria-live="polite"></div>
+      <div dangerouslySetInnerHTML={{ __html: `\
+<script>\
+window.galleryImages=[\
+{name:"Arm\u00e1rios FlexHome grafite e branco",image:"/images/dYdvdqs6VrAy.png"},\
+{name:"Arm\u00e1rio FlexHome \u2014 foto 2",image:"/images/armario-2.png"},\
+{name:"Arm\u00e1rio FlexHome \u2014 foto 3",image:"/images/armario-3.png"},\
+{name:"Arm\u00e1rio FlexHome \u2014 foto 4",image:"/images/armario-4.png"},\
+{name:"Arm\u00e1rio FlexHome \u2014 foto 5",image:"/images/armario-5.png"},\
+{name:"Arm\u00e1rio FlexHome \u2014 foto 6",image:"/images/armario-6.png"}];\
+window.__idx=0;\
+window.__go=function(i){window.__idx=i;var m=document.getElementById("main-product-image");if(m)m.src=window.galleryImages[i].image;var t=document.querySelectorAll("#thumbnails .thumbnail");for(var j=0;j<t.length;j++){t[j].className=t[j].className.replace(" active","")}if(t[i])t[i].className+=" active"};\
+window.__prev=function(){window.__go(window.__idx===0?window.galleryImages.length-1:window.__idx-1)};\
+window.__next=function(){window.__go((window.__idx+1)%window.galleryImages.length)};\
+window.__d=function(v){return String(v||"").replace(/\D/g,"")};\
+window.__S=\'<span class="ship-free">\u2713 FRETE GR\u00c1TIS</span>\';\
+window.__E=\'<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.\';\
+window.__cepShow=function(h,t){var e=document.getElementById("shipping-result");if(!e)return;e.innerHTML=h;e.className=e.className.replace(/\bis-(\w+)\b/g,"");e.classList.add(t==="error"?"is-error":"is-success");e.hidden=false};\
+window.__cepCalc=function(){var i=document.getElementById("cep-calc"),b=document.getElementById("cep-calc-btn"),c=window.__d(i.value);if(c.length!==8){window.__cepShow("Digite um CEP v\u00e1lido com 8 d\u00edgitos.","error");return}b.disabled=true;b.textContent="...";window.__cepShow("Consultando...","success");var x=new XMLHttpRequest,to=setTimeout(function(){x.abort()},6000);x.open("GET","https://viacep.com.br/ws/"+c+"/json/",true);x.onload=function(){clearTimeout(to);b.disabled=false;b.textContent="Calcular";try{var d=JSON.parse(x.responseText),l=(!d.erro&&d.localidade)?d.localidade+(d.uf?" - "+d.uf:""):"";window.__cepShow(window.__S+" "+(l?'para <strong>'+l+"</strong>":"para o seu endere\u00e7o")+window.__E,"success")}catch(e){window.__cepShow(window.__S+" para o seu endere\u00e7o"+window.__E,"success")}};x.onerror=function(){clearTimeout(to);b.disabled=false;b.textContent="Calcular";window.__cepShow(window.__S+" para o seu endere\u00e7o"+window.__E,"success")};x.send()};\
+</script>\
+` }} />
       <script src="/js/AxVL7LwBujgu.js?v=3" defer></script>
       <script src="/js/yFVPl407oWCP.js?v=3" defer></script>
     </>
