@@ -888,9 +888,13 @@ fieldset {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 48px;
   padding: 0 24px;
   border: 0;
+  text-decoration: none;
   border-radius: 14px;
   font-size: 13px;
   font-weight: 900;
