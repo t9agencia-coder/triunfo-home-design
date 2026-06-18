@@ -3,9 +3,11 @@
 
   var galleryImages = [
     { name: "Armários FlexHome grafite e branco", image: "/images/dYdvdqs6VrAy.png" },
-    { name: "Armário FlexHome com proteção contra poeira", image: "/images/MAZluCrCvzoN.png" },
-    { name: "Armário FlexHome com grande capacidade", image: "/images/50jgQ9aM95Kz.png" },
-    { name: "Medidas do armário FlexHome", image: "/images/vyyH3SCjHWTz.png" }
+    { name: "Armário FlexHome — foto 2", image: "/images/armario%202.webp" },
+    { name: "Armário FlexHome — foto 3", image: "/images/armario%203.webp" },
+    { name: "Armário FlexHome — foto 4", image: "/images/armario%204.webp" },
+    { name: "Armário FlexHome — foto 5", image: "/images/armario%205.webp" },
+    { name: "Armário FlexHome — foto 6", image: "/images/armario%206.webp" }
   ];
 
   var selection = {
