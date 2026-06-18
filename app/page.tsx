@@ -618,8 +618,8 @@ export default function Home() {
       </div>
 
       <div className="toast" id="toast" role="status" aria-live="polite"></div>
-      <script src="/js/AxVL7LwBujgu.js" defer></script>
-      <script src="/js/yFVPl407oWCP.js" defer></script>
+      <script src="/js/AxVL7LwBujgu.js?v=2" defer></script>
+      <script src="/js/yFVPl407oWCP.js?v=2" defer></script>
     </>
   );
 }
