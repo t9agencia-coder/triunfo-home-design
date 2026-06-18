@@ -596,37 +596,30 @@ function CheckoutContent() {
             </div>
           </div>
 
-          <div className="coupon-row">
-            <input type="text" placeholder="Cupom de desconto" />
-            <button type="button">Aplicar</button>
-          </div>
-
           <div className="summary-totals">
-            <div><span>Subtotal</span><strong>R$ {price.toFixed(2)}</strong></div>
+            <div><span>Subtotal ({units} item(ns))</span><strong>R$ {price.toFixed(2)}</strong></div>
             <div><span>Frete</span><strong style={{ color: "#167555" }}>Grátis</strong></div>
-            <div className="summary-discount" hidden></div>
             <div className="grand-total">
               <span>Total</span>
               <strong>R$ {price.toFixed(2)}</strong>
             </div>
           </div>
 
-          <div className="savings-highlight">
+          <div className="savings-highlight" style={{ fontSize: 12 }}>
             💰 Você economiza <strong>R$ {(compareAt - price).toFixed(2)}</strong> nesta oferta!
           </div>
 
-          <div className="guarantee" style={{ marginTop: 16 }}>
-            <div style={{ display: "grid", gap: 8 }}>
+          <div className="guarantee" style={{ marginTop: 14, border: 0, borderTop: "1px solid var(--line)", borderRadius: 0, background: "none", color: "var(--muted)", padding: "14px 0 0", fontSize: 12 }}>
+            <div style={{ display: "grid", gap: 10 }}>
               <span>🔒 Compra 100% segura</span>
               <span>🛡️ Dados protegidos com criptografia SSL</span>
               <span>✅ Pagamento processado com segurança</span>
-              <span>📞 Atendimento disponível pelo WhatsApp</span>
             </div>
           </div>
 
-          <div className="guarantee" style={{ marginTop: 8, border: "1px solid #d4c5a0", background: "#fdf8ed", color: "#7d6320" }}>
+          <div style={{ marginTop: 14, padding: 12, borderRadius: 11, border: "1px solid #d4c5a0", background: "#fdf8ed", color: "#7d6320", fontSize: 12, textAlign: "center" }}>
             <strong>⭐ Satisfação Garantida</strong>
-            <br />7 dias para trocas e devoluções. Seu dinheiro de volta se não ficar satisfeito.
+            <br />7 dias para trocas. Seu dinheiro de volta se não ficar satisfeito.
           </div>
 
           <div style={{ marginTop: 10, fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
