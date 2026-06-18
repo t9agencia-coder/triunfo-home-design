@@ -3,11 +3,9 @@
 
   var galleryImages = [
     { name: "Armários FlexHome grafite e branco", image: "/images/dYdvdqs6VrAy.png" },
-    { name: "Armário FlexHome grafite", image: "/images/product-2.png" },
-    { name: "Prateleiras retráteis do armário FlexHome", image: "/images/product-4.png" },
-    { name: "Pés ajustáveis do armário FlexHome", image: "/images/product-5.png" },
-    { name: "Medidas do armário FlexHome", image: "/images/product-6.png" },
-    { name: "Armários FlexHome em dois acabamentos", image: "/images/product-1.png" }
+    { name: "Armário FlexHome com proteção contra poeira", image: "/images/MAZluCrCvzoN.png" },
+    { name: "Armário FlexHome com grande capacidade", image: "/images/50jgQ9aM95Kz.png" },
+    { name: "Medidas do armário FlexHome", image: "/images/vyyH3SCjHWTz.png" }
   ];
 
   var selection = {
