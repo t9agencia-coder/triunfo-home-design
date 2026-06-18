@@ -283,18 +283,18 @@
             var destino = local ? "para <strong>" + local + "</strong>" : "para o seu endere\u00e7o";
             showResult(
               '<span class="ship-free">\u2713 FRETE GR\u00c1TIS</span> ' + destino + "<br>" +
-                "Entrega estimada em <strong>3 a 10 dias \u00fateis</strong> ap\u00f3s a confirma\u00e7\u00e3o.",
+                "Entrega estimada em <strong>3 a 6 dias \u00fateis</strong> ap\u00f3s a confirma\u00e7\u00e3o.",
               "success"
             );
           } catch (e) {
-            showResult("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 10 dias \u00fateis</strong>.", "success");
+            showResult("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.", "success");
           }
         };
         xhr.onerror = function () {
           clearTimeout(timer);
           button.disabled = false;
           button.textContent = "Calcular";
-          showResult("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 10 dias \u00fateis</strong>.", "success");
+          showResult("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.", "success");
         };
         xhr.send();
       }
