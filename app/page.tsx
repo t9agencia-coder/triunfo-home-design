@@ -13,8 +13,8 @@ export default function Home() {
             </svg>
           </button>
 
-          <a className="store-logo" href="index.html" aria-label="Triunfo Home Design - página inicial">
-            <img src="images/oILg2cf6VMfI.png" alt="Triunfo Home Design" />
+          <a className="store-logo" href="/" aria-label="Triunfo Home Design - página inicial">
+            <img src="/images/oILg2cf6VMfI.png" alt="Triunfo Home Design" />
           </a>
 
           <nav className="header-actions" aria-label="Atalhos da loja">
@@ -67,7 +67,7 @@ export default function Home() {
             <div className="gallery">
               <p className="breadcrumb gallery-breadcrumb">Casa / Organização / Armários</p>
               <div className="gallery-main">
-                <img id="main-product-image" src="images/dYdvdqs6VrAy.png" alt="Armários FlexHome grafite e branco" />
+                <img id="main-product-image" src="/images/dYdvdqs6VrAy.png" alt="Armários FlexHome grafite e branco" />
                 <span className="badge badge-accent">Frete grátis</span>
                 <button className="gallery-arrow gallery-prev" id="gallery-prev" aria-label="Imagem anterior">9</button>
                 <button className="gallery-arrow gallery-next" id="gallery-next" aria-label="Próxima imagem">:</button>
@@ -191,11 +191,11 @@ export default function Home() {
             <h2 id="description-title">Descrição do produto</h2>
             <div className="description-images">
               <video autoPlay muted loop playsInline preload="metadata" aria-label="Apresentação do armário FlexHome">
-                <source src="media/zQKHLotld6L7.mp4" type="video/mp4" />
+                <source src="/media/zQKHLotld6L7.mp4" type="video/mp4" />
               </video>
-              <img src="images/MAZluCrCvzoN.png" alt="Armário multifuncional com proteção contra poeira e estrutura reforçada" loading="lazy" />
-              <img src="images/50jgQ9aM95Kz.png" alt="Armário com grande capacidade e organização para o dia a dia" loading="lazy" />
-              <img src="images/vyyH3SCjHWTz.png" alt="Medidas e opções de tamanho do armário" loading="lazy" />
+              <img src="/images/MAZluCrCvzoN.png" alt="Armário multifuncional com proteção contra poeira e estrutura reforçada" loading="lazy" />
+              <img src="/images/50jgQ9aM95Kz.png" alt="Armário com grande capacidade e organização para o dia a dia" loading="lazy" />
+              <img src="/images/vyyH3SCjHWTz.png" alt="Medidas e opções de tamanho do armário" loading="lazy" />
             </div>
           </div>
         </section>
@@ -252,7 +252,7 @@ export default function Home() {
                 </header>
                 <p>Confesso que tinha receio de comprar online por causa da promoção "pague 1 leve 2", achei que fosse golpe. Mas chegaram OS DOIS armários certinhos em 4 dias úteis. A montagem é super fácil, levei uns 25 minutos cada. O aço é bem grosso, nada balança. Vale cada centavo!</p>
                 <div className="review-photo">
-                  <img src="images/Y02lszuNP9rb.png" alt="Armário FlexHome recebido por Mariana" loading="lazy" />
+                  <img src="/images/Y02lszuNP9rb.png" alt="Armário FlexHome recebido por Mariana" loading="lazy" />
                   <span>1/1</span>
                 </div>
                 <div className="review-verified">✓ Compra verificada</div>
@@ -269,7 +269,7 @@ export default function Home() {
                 </header>
                 <p>Comprei pra minha esposa que vive reclamando de organização da cozinha. Ela ficou IMPRESSIONADA. Cabe panelas, potes, eletroportáteis... ainda sobrou espaço. As portas com vidro deslizante são lindas e a iluminação interna dá um charme à parte. Recomendo de olhos fechados.</p>
                 <div className="review-photo">
-                  <img src="images/CYmlWF5u4uG4.png" alt="Armário FlexHome recebido por Carlos" loading="lazy" />
+                  <img src="/images/CYmlWF5u4uG4.png" alt="Armário FlexHome recebido por Carlos" loading="lazy" />
                   <span>1/1</span>
                 </div>
                 <div className="review-verified">✓ Compra verificada</div>
@@ -286,7 +286,7 @@ export default function Home() {
                 </header>
                 <p>Que achado! Paguei por um e vieram dois mesmo, igual no anúncio. Coloquei um na cozinha e outro no quarto das crianças para os brinquedos. Organização total, entrega rápida (3 dias) e embalagem super segura. Recomendo demais! Já indiquei pra três amigas.</p>
                 <div className="review-photo">
-                  <img src="images/xWMHXocgqr4n.png" alt="Armário FlexHome recebido por Juliana" loading="lazy" />
+                  <img src="/images/xWMHXocgqr4n.png" alt="Armário FlexHome recebido por Juliana" loading="lazy" />
                   <span>1/1</span>
                 </div>
                 <div className="review-verified">✓ Compra verificada</div>
@@ -303,7 +303,7 @@ export default function Home() {
                 </header>
                 <p>Pesquisei em vários lugares e o frete grátis aqui foi o que me convenceu — em outro site sai por mais de 250 só um, aqui paguei menos da metade pelos dois. Aguenta bem o peso (coloquei microondas, sanduicheira, liquidificador) e os pés ajustáveis ajudam em piso desnivelado. Produto sério.</p>
                 <div className="review-photo">
-                  <img src="images/0BAbaiyrE8yj.png" alt="Armário FlexHome recebido por Roberto" loading="lazy" />
+                  <img src="/images/0BAbaiyrE8yj.png" alt="Armário FlexHome recebido por Roberto" loading="lazy" />
                   <span>1/1</span>
                 </div>
                 <div className="review-verified">✓ Compra verificada</div>
@@ -320,7 +320,7 @@ export default function Home() {
                 </header>
                 <p>Apartamento pequeno e essa foi a melhor solução que achei. Ocupa pouco espaço de chão e tem bastante volume interno. Acabei usando como armário de varanda também — não enferruja porque o aço é tratado. Ótimo acabamento, parece muito mais caro do que é.</p>
                 <div className="review-photo">
-                  <img src="images/ngAU2b3lgN2H.png" alt="Armário FlexHome recebido por Patrícia" loading="lazy" />
+                  <img src="/images/ngAU2b3lgN2H.png" alt="Armário FlexHome recebido por Patrícia" loading="lazy" />
                   <span>1/1</span>
                 </div>
                 <div className="review-verified">✓ Compra verificada</div>
@@ -337,7 +337,7 @@ export default function Home() {
                 </header>
                 <p>Tava na dúvida porque era promoção meio "boa demais". Comprei mesmo assim e foi a melhor decisão. Os dois armários chegaram em perfeito estado, frete grátis cumprido, suporte respondeu rápido quando perguntei sobre prazo. Empilhei dois no escritório, ficou show de bola.</p>
                 <div className="review-photo">
-                  <img src="images/6bgSK5cU7TVB.png" alt="Armários FlexHome recebidos por Thiago" loading="lazy" />
+                  <img src="/images/6bgSK5cU7TVB.png" alt="Armários FlexHome recebidos por Thiago" loading="lazy" />
                   <span>1/1</span>
                 </div>
                 <div className="review-verified">✓ Compra verificada</div>
@@ -354,9 +354,9 @@ export default function Home() {
                 </header>
                 <p>Muito útil, fácil de montar e com uma cor bonita. Guarda bastante coisa, combina bem com o quarto e deixou o dia a dia mais prático. Eu recomendaria para outras pessoas.</p>
                 <div className="review-photo review-photo-gallery" aria-label="3 fotos da avaliação do Marcos Almeida">
-                  <img src="images/5wtP9hhJHqTI.jpg" alt="Armário fotografado pelo Marcos Almeida" loading="lazy" />
-                  <img src="images/RKEchpvyTEKm.jpg" alt="Detalhe do armário fotografado pelo Marcos Almeida" loading="lazy" />
-                  <img src="images/mOT2rg6nLsgP.jpg" alt="Armário organizado pelo Marcos Almeida" loading="lazy" />
+                  <img src="/images/5wtP9hhJHqTI.jpg" alt="Armário fotografado pelo Marcos Almeida" loading="lazy" />
+                  <img src="/images/RKEchpvyTEKm.jpg" alt="Detalhe do armário fotografado pelo Marcos Almeida" loading="lazy" />
+                  <img src="/images/mOT2rg6nLsgP.jpg" alt="Armário organizado pelo Marcos Almeida" loading="lazy" />
                 </div>
               </article>
 
@@ -371,8 +371,8 @@ export default function Home() {
                 </header>
                 <p>Gostei muito. Há bastante espaço para guardar nossas coisas e a montagem foi fácil. Ficou no tamanho certo para o quarto e parece muito funcional.</p>
                 <div className="review-photo review-photo-gallery" aria-label="2 fotos da avaliação do Patrícia Souza">
-                  <img src="images/6kDMSuBenz8F.jpg" alt="Armário montado pelo Patrícia Souza" loading="lazy" />
-                  <img src="images/yNX5PNzV10ln.jpg" alt="Armário organizado pelo Patrícia Souza" loading="lazy" />
+                  <img src="/images/6kDMSuBenz8F.jpg" alt="Armário montado pelo Patrícia Souza" loading="lazy" />
+                  <img src="/images/yNX5PNzV10ln.jpg" alt="Armário organizado pelo Patrícia Souza" loading="lazy" />
                 </div>
               </article>
 
@@ -387,8 +387,8 @@ export default function Home() {
                 </header>
                 <p>Ideal para vários ambientes da casa. É fácil de montar, firme e a estrutura metálica suporta bastante peso. A porta deslizante é um diferencial e o custo-benefício é ótimo.</p>
                 <div className="review-photo review-photo-gallery" aria-label="2 fotos da avaliação do Rodrigo Oliveira">
-                  <img src="images/m0ouVDa7S3ix.jpg" alt="Armário utilizado pelo Rodrigo Oliveira" loading="lazy" />
-                  <img src="images/bpCVa11Cf2M1.jpg" alt="Detalhe interno do armário do Rodrigo Oliveira" loading="lazy" />
+                  <img src="/images/m0ouVDa7S3ix.jpg" alt="Armário utilizado pelo Rodrigo Oliveira" loading="lazy" />
+                  <img src="/images/bpCVa11Cf2M1.jpg" alt="Detalhe interno do armário do Rodrigo Oliveira" loading="lazy" />
                 </div>
               </article>
 
@@ -403,7 +403,7 @@ export default function Home() {
                 </header>
                 <p>Usei na minha pequena padaria para proteger os pães nas entregas da varanda. Resolveu bem e teve preço razoável. A montagem foi fácil, embora os puxadores tenham dado trabalho e os parafusos prateados parecessem simples.</p>
                 <div className="review-photo">
-                  <img src="images/O261qjNaq23v.jpg" alt="Armário usado pelo Fernanda Lima" loading="lazy" />
+                  <img src="/images/O261qjNaq23v.jpg" alt="Armário usado pelo Fernanda Lima" loading="lazy" />
                   <span>1/1</span>
                 </div>
               </article>
@@ -419,7 +419,7 @@ export default function Home() {
                 </header>
                 <p>O armário é bonito, porém as portas vieram sem os suportes que mantêm os painéis no lugar. O fabricante não tinha as peças necessárias e também não ofereceu portas de reposição.</p>
                 <div className="review-photo">
-                  <img src="images/ZcCcBAK581jB.jpg" alt="Problema na porta registrado pelo Lucas Pereira" loading="lazy" />
+                  <img src="/images/ZcCcBAK581jB.jpg" alt="Problema na porta registrado pelo Lucas Pereira" loading="lazy" />
                   <span>1/1</span>
                 </div>
               </article>
@@ -435,7 +435,7 @@ export default function Home() {
                 </header>
                 <p>Bonito e fácil de instalar. Dá para guardar bastante coisa e as portas escondem o conteúdo, deixando o ambiente mais organizado e com uma aparência limpa.</p>
                 <div className="review-photo">
-                  <img src="images/xFuTXGhJqncO.jpg" alt="Armário organizado pelo Juliana Costa" loading="lazy" />
+                  <img src="/images/xFuTXGhJqncO.jpg" alt="Armário organizado pelo Juliana Costa" loading="lazy" />
                   <span>1/1</span>
                 </div>
               </article>
@@ -451,7 +451,7 @@ export default function Home() {
                 </header>
                 <p>Montagem simples e boa qualidade. Eu precisava de espaço extra em uma cozinha pequena, e a porta basculante funcionou bem sem ocupar espaço ao abrir.</p>
                 <div className="review-photo">
-                  <img src="images/UUxXzKgzlhRP.jpg" alt="Armário instalado pelo Bruno Carvalho" loading="lazy" />
+                  <img src="/images/UUxXzKgzlhRP.jpg" alt="Armário instalado pelo Bruno Carvalho" loading="lazy" />
                   <span>1/1</span>
                 </div>
               </article>
@@ -465,7 +465,7 @@ export default function Home() {
           <div className="container">
             <div className="about-grid">
               <div className="about-media">
-                <img src="images/O2XU0PdRLQL8.png" alt="Equipe da Triunfo Home Design no centro de distribuição" loading="lazy" />
+                <img src="/images/O2XU0PdRLQL8.png" alt="Equipe da Triunfo Home Design no centro de distribuição" loading="lazy" />
               </div>
               <div className="about-content">
                 <p className="eyebrow">QUEM SOMOS</p>
@@ -531,7 +531,7 @@ export default function Home() {
         <div className="footer-content container">
           <section className="footer-brand">
             <div className="store-logo">
-              <img src="images/oILg2cf6VMfI.png" alt="Triunfo Home Design" />
+              <img src="/images/oILg2cf6VMfI.png" alt="Triunfo Home Design" />
             </div>
             <h2>Triunfo Home Design</h2>
             <p>Soluções práticas para organização, conforto e funcionalidade dentro da sua casa.</p>
@@ -579,15 +579,15 @@ export default function Home() {
         </div>
 
         <div className="payment-icons container" aria-label="Formas de pagamento aceitas">
-          <img src="images/ZevbLkVeF2gs.svg" alt="Amex" width="39" height="26" />
-          <img src="images/ArGWVJHpgYvU.svg" alt="Visa" width="39" height="26" />
-          <img src="images/0ovYmYCaKmvG.svg" alt="Diners Club" width="39" height="26" />
-          <img src="images/q0kdVVG0rtRH.svg" alt="Mastercard" width="39" height="26" />
-          <img src="images/pYoM0lYcIBRp.svg" alt="Discover" width="39" height="26" />
-          <img src="images/R8kYc3JGxQCa.svg" alt="Aura" width="39" height="26" />
-          <img src="images/PSdsna7V1PGI.svg" alt="Elo" width="39" height="26" />
-          <img src="images/fGHGNLPt08me.svg" alt="Hiper" width="39" height="26" />
-          <img src="images/9zS7PqYNCPfs.svg" alt="Pix" width="39" height="26" />
+          <img src="/images/ZevbLkVeF2gs.svg" alt="Amex" width="39" height="26" />
+          <img src="/images/ArGWVJHpgYvU.svg" alt="Visa" width="39" height="26" />
+          <img src="/images/0ovYmYCaKmvG.svg" alt="Diners Club" width="39" height="26" />
+          <img src="/images/q0kdVVG0rtRH.svg" alt="Mastercard" width="39" height="26" />
+          <img src="/images/pYoM0lYcIBRp.svg" alt="Discover" width="39" height="26" />
+          <img src="/images/R8kYc3JGxQCa.svg" alt="Aura" width="39" height="26" />
+          <img src="/images/PSdsna7V1PGI.svg" alt="Elo" width="39" height="26" />
+          <img src="/images/fGHGNLPt08me.svg" alt="Hiper" width="39" height="26" />
+          <img src="/images/9zS7PqYNCPfs.svg" alt="Pix" width="39" height="26" />
         </div>
       </footer>
 
