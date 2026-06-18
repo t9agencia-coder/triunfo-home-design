@@ -2400,6 +2400,92 @@ fieldset {
   display: none;
 }
 
+.progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dcd2d3;
+  transition: background 200ms;
+}
+
+.progress-step.active .progress-dot {
+  background: var(--accent);
+}
+
+.progress-step.done .progress-dot {
+  background: var(--success);
+}
+
+.progress-step.done .progress-label,
+.progress-step.active .progress-label {
+  color: var(--ink);
+}
+
+.progress-line {
+  width: 24px;
+  height: 2px;
+  background: #dcd2d3;
+  border-radius: 2px;
+}
+
+.progress-line.done {
+  background: var(--success);
+}
+
+.field-valid {
+  position: relative;
+}
+
+.field-valid input:not(:placeholder-shown) ~ .check-icon,
+.field-valid input:not(:placeholder-shown) + .check-icon {
+  display: block;
+}
+
+.check-icon {
+  display: none;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--success);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.field-hint {
+  font-size: 11px;
+  font-weight: 700;
+  min-height: 16px;
+  transition: color 160ms;
+}
+
+.field-hint.error {
+  color: var(--danger);
+}
+
+.field-hint.success {
+  color: var(--success);
+}
+
 .finish-button {
   width: 100%;
 }
