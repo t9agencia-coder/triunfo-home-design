@@ -2,17 +2,78 @@
   "use strict";
 
   var galleryImages = [
-    { name: "Armários FlexHome grafite e branco", image: "/images/dYdvdqs6VrAy.png" },
-    { name: "Armário FlexHome — foto 2", image: "/images/armario-2.png" },
-    { name: "Armário FlexHome — foto 3", image: "/images/armario-3.png" },
-    { name: "Armário FlexHome — foto 4", image: "/images/armario-4.png" },
-    { name: "Armário FlexHome — foto 5", image: "/images/armario-5.png" },
-    { name: "Armário FlexHome — foto 6", image: "/images/armario-6.png" }
+    { name: "Arm\u00e1rios FlexHome grafite e branco", image: "/images/dYdvdqs6VrAy.png" },
+    { name: "Arm\u00e1rio FlexHome \u2014 foto 2", image: "/images/armario-2.png" },
+    { name: "Arm\u00e1rio FlexHome \u2014 foto 3", image: "/images/armario-3.png" },
+    { name: "Arm\u00e1rio FlexHome \u2014 foto 4", image: "/images/armario-4.png" },
+    { name: "Arm\u00e1rio FlexHome \u2014 foto 5", image: "/images/armario-5.png" },
+    { name: "Arm\u00e1rio FlexHome \u2014 foto 6", image: "/images/armario-6.png" }
   ];
+
+  var __idx = 0;
+
+  function __go(i) {
+    __idx = i;
+    var m = document.getElementById("main-product-image");
+    if (m) m.src = galleryImages[i].image;
+    var t = document.querySelectorAll("#thumbnails .thumbnail");
+    for (var j = 0; j < t.length; j++) {
+      t[j].className = t[j].className.replace(" active", "");
+    }
+    if (t[i]) t[i].className += " active";
+  }
+
+  function __prev() { __go(__idx === 0 ? galleryImages.length - 1 : __idx - 1); }
+  function __next() { __go((__idx + 1) % galleryImages.length); }
+
+  function __d(v) { return String(v || "").replace(/\D/g, ""); }
+  var __S = '<span class="ship-free">\u2713 FRETE GR\u00c1TIS</span>';
+  var __E = '<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.';
+
+  function __cepShow(h, t) {
+    var e = document.getElementById("shipping-result");
+    if (!e) return;
+    e.innerHTML = h;
+    e.className = e.className.replace(/\bis-(\w+)\b/g, "");
+    e.classList.add(t === "error" ? "is-error" : "is-success");
+    e.hidden = false;
+  }
+
+  function __cepCalc() {
+    var i = document.getElementById("cep-calc"),
+        b = document.getElementById("cep-calc-btn"),
+        c = __d(i.value);
+    if (c.length !== 8) { __cepShow("Digite um CEP v\u00e1lido com 8 d\u00edgitos.", "error"); return; }
+    b.disabled = true;
+    b.textContent = "...";
+    __cepShow("Consultando...", "success");
+    var x = new XMLHttpRequest(),
+        to = setTimeout(function () { x.abort(); }, 6000);
+    x.open("GET", "https://viacep.com.br/ws/" + c + "/json/", true);
+    x.onload = function () {
+      clearTimeout(to);
+      b.disabled = false;
+      b.textContent = "Calcular";
+      try {
+        var d = JSON.parse(x.responseText),
+            l = (!d.erro && d.localidade) ? d.localidade + (d.uf ? " - " + d.uf : "") : "";
+        __cepShow(__S + " " + (l ? 'para <strong>' + l + "</strong>" : "para o seu endere\u00e7o") + __E, "success");
+      } catch (e) {
+        __cepShow(__S + " para o seu endere\u00e7o" + __E, "success");
+      }
+    };
+    x.onerror = function () {
+      clearTimeout(to);
+      b.disabled = false;
+      b.textContent = "Calcular";
+      __cepShow(__S + " para o seu endere\u00e7o" + __E, "success");
+    };
+    x.send();
+  }
 
   var selection = {
     color: { id: "grafite-branco", name: "Grafite e branco", image: galleryImages[0].image },
-    size: "Padrão",
+    size: "Padr\u00e3o",
     units: 2,
     price: 109.90,
     compareAt: 219.80,
@@ -20,19 +81,10 @@
     imageIndex: 0
   };
 
-  function byId(id) {
-    return document.getElementById(id);
-  }
+  function byId(id) { return document.getElementById(id); }
+  function qsa(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
+  function forEach(arr, fn) { Array.prototype.forEach.call(arr, fn); }
 
-  function qsa(sel, ctx) {
-    return Array.prototype.slice.call((ctx || document).querySelectorAll(sel));
-  }
-
-  function forEach(arr, fn) {
-    Array.prototype.forEach.call(arr, fn);
-  }
-
-  var mainImage = byId("main-product-image");
   var cartLayer = byId("cart-layer");
   var cartItems = byId("cart-items");
   var cartFooter = byId("cart-footer");
@@ -40,8 +92,8 @@
 
   function setImage(index) {
     selection.imageIndex = index;
-    mainImage.src = galleryImages[index].image;
-    mainImage.alt = galleryImages[index].name;
+    var m = byId("main-product-image");
+    if (m) { m.src = galleryImages[index].image; m.alt = galleryImages[index].name; }
     forEach(document.querySelectorAll("[data-image-index]"), function (button) {
       if (button.classList) {
         button.classList.toggle("active", Number(button.getAttribute("data-image-index")) === index);
@@ -54,7 +106,32 @@
   }
 
   function setupGallery() {
-    /* handled by inline script in page.tsx */
+    var prev = byId("gallery-prev");
+    var next = byId("gallery-next");
+    if (prev) prev.addEventListener("click", __prev);
+    if (next) next.addEventListener("click", __next);
+    var thumbs = document.getElementById("thumbnails");
+    if (thumbs) {
+      thumbs.addEventListener("click", function (e) {
+        var btn = e.target.closest ? e.target.closest("[data-image-index]") : null;
+        if (btn) __go(Number(btn.getAttribute("data-image-index")));
+      });
+    }
+  }
+
+  function setupCep() {
+    var input = byId("cep-calc");
+    var btn = byId("cep-calc-btn");
+    if (input) {
+      input.addEventListener("input", function () {
+        var r = __d(this.value).slice(0, 8);
+        this.value = r.replace(/^(\d{5})(\d)/, "$1-$2");
+      });
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") __cepCalc();
+      });
+    }
+    if (btn) btn.addEventListener("click", __cepCalc);
   }
 
   function setupReviews() {
@@ -109,12 +186,6 @@
 
     show(1, false);
   }
-
-  var variantUrls = {
-    "2 Pretos":          "https://seguro.triunfohomedesign.com/api/public/shopify?product=3326975727724&store=33269",
-    "2 Brancos":         "https://seguro.triunfohomedesign.com/api/public/shopify?product=3326971813372&store=33269",
-    "1 Preto e 1 Branco":"https://seguro.triunfohomedesign.com/api/public/shopify?product=3326933997479&store=33269"
-  };
 
   function currentItem() {
     return {
@@ -205,6 +276,7 @@
   function init() {
     try { setupGallery(); } catch (e) {}
     try { setupReviews(); } catch (e) {}
+    try { setupCep(); } catch (e) {}
 
     var fy = byId("footer-year");
     if (fy) fy.textContent = new Date().getFullYear();
@@ -235,8 +307,6 @@
 
     var stickyBuy = byId("sticky-buy");
     if (stickyBuy) stickyBuy.addEventListener("click", goToPurchase);
-
-    /* shipping calc handled by inline script in page.tsx */
 
     byId("close-cart") && byId("close-cart").addEventListener("click", closeCart);
     byId("cart-backdrop") && byId("cart-backdrop").addEventListener("click", closeCart);
