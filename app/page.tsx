@@ -157,10 +157,10 @@ function __next(){__go((__idx+1)%__imgs.length);}
   var btn = document.getElementById("cep-calc-btn");
   var res = document.getElementById("shipping-result");
   if(!inp||!btn||!res)return;
-  function d(v){return String(v||"").replace(/\D/g,"");}
+  function d(v){return String(v||"").replace(/\\D/g,"");}
   function show(h,t){
     res.innerHTML = h;
-    res.className = res.className.replace(/\bis-(\w+)\b/g,"");
+    res.className = res.className.replace(/\\bis-(\\w+)\\b/g,"");
     res.classList.add(t==="error"?"is-error":"is-success");
     res.hidden = false;
   }
