@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, email, phone, cpf, amount, title, quantity, description } = body;
+    const { name, email, phone, cpf, amount, title, quantity, description, address } = body;
 
     if (!name || !cpf || !amount) {
       return NextResponse.json({ error: "Campos obrigatórios: name, cpf, amount" }, { status: 400 });
@@ -28,6 +28,17 @@ export async function POST(req: NextRequest) {
         name,
         email: email || "",
         phone: phone ? phone.replace(/\D/g, "") : "",
+        address: address
+          ? {
+              zip: address.zip,
+              street: address.street,
+              number: address.number,
+              complement: address.complement || "",
+              neighborhood: address.neighborhood,
+              city: address.city,
+              state: address.state,
+            }
+          : undefined,
       },
       amount: Math.round(amount * 100),
       items: [
