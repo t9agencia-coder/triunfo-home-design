@@ -141,6 +141,8 @@ function __next(){__go((__idx+1)%__imgs.length);}
               <div dangerouslySetInnerHTML={{ __html: `
 <script>
 var __d=function(v){return String(v||"").replace(/\\D/g,"");};
+var __S='<span class="ship-free">\u2713 FRETE GR\u00c1TIS</span>';
+var __E='<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.';
 var __cepShow=function(h,t){
   var e=document.getElementById("shipping-result");
   if(!e)return;
@@ -151,13 +153,13 @@ var __cepShow=function(h,t){
 };
 var __cepCalc=function(){
   var i=document.getElementById("cep-calc"),b=document.getElementById("cep-calc-btn"),c=__d(i.value);
-  if(c.length!==8){__cepShow("Digite um CEP v\u00e1lido com 8 d\u00edgitos.","error");return;}
-  b.disabled=true;b.textContent="...";__cepShow("Consultando...","success");
+  if(c.length!==8){__cepShow('Digite um CEP v\u00e1lido com 8 d\u00edgitos.','error');return;}
+  b.disabled=true;b.textContent='...';__cepShow('Consultando...','success');
   var x=new XMLHttpRequest(),to=setTimeout(function(){x.abort();},6000);
-  x.open("GET","https://viacep.com.br/ws/"+c+"/json/",true);
-  x.onload=function(){clearTimeout(to);b.disabled=false;b.textContent="Calcular";
-    try{var d=JSON.parse(x.responseText),l=(!d.erro&&d.localidade)?d.localidade+(d.uf?" - "+d.uf:""):"";__cepShow("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> "+(l?"para <strong>"+l+"</strong>":"para o seu endere\u00e7o")+"<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");}catch(e){__cepShow("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");}};
-  x.onerror=function(){clearTimeout(to);b.disabled=false;b.textContent="Calcular";__cepShow("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");};
+  x.open('GET','https://viacep.com.br/ws/'+c+'/json/',true);
+  x.onload=function(){clearTimeout(to);b.disabled=false;b.textContent='Calcular';
+    try{var d=JSON.parse(x.responseText),l=(!d.erro&&d.localidade)?d.localidade+(d.uf?' - '+d.uf:''):'';__cepShow(__S+' '+(l?'para <strong>'+l+'</strong>':'para o seu endere\u00e7o')+__E,'success');}catch(e){__cepShow(__S+' para o seu endere\u00e7o'+__E,'success');}};
+  x.onerror=function(){clearTimeout(to);b.disabled=false;b.textContent='Calcular';__cepShow(__S+' para o seu endere\u00e7o'+__E,'success');};
   x.send();
 };
 </script>
