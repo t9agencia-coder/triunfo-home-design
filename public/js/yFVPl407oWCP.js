@@ -54,36 +54,7 @@
   }
 
   function setupGallery() {
-    forEach(qsa("#thumbnails .thumbnail"), function (thumb, index) {
-      thumb.addEventListener("click", function () { setImage(index); });
-    });
-
-    var prev = byId("gallery-prev");
-    var next = byId("gallery-next");
-    if (prev) prev.addEventListener("click", function () {
-      setImage(selection.imageIndex === 0 ? galleryImages.length - 1 : selection.imageIndex - 1);
-    });
-    if (next) next.addEventListener("click", function () {
-      setImage((selection.imageIndex + 1) % galleryImages.length);
-    });
-
-    var galleryMain = document.querySelector(".gallery-main");
-    if (galleryMain) {
-      var touchStartX = 0;
-      galleryMain.addEventListener("touchstart", function (e) {
-        touchStartX = e.changedTouches[0].screenX;
-      }, { passive: true });
-      galleryMain.addEventListener("touchend", function (e) {
-        var diff = touchStartX - e.changedTouches[0].screenX;
-        if (Math.abs(diff) > 50) {
-          if (diff > 0) {
-            setImage((selection.imageIndex + 1) % galleryImages.length);
-          } else {
-            setImage(selection.imageIndex === 0 ? galleryImages.length - 1 : selection.imageIndex - 1);
-          }
-        }
-      }, { passive: true });
-    }
+    /* handled by inline script in page.tsx */
   }
 
   function setupReviews() {

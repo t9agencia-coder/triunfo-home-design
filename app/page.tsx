@@ -98,6 +98,48 @@ export default function Home() {
               </div>
             </div>
 
+            <script dangerouslySetInnerHTML={{ __html: `
+(function(){
+  var imgs = [
+    "/images/dYdvdqs6VrAy.png",
+    "/images/armario-2.png",
+    "/images/armario-3.png",
+    "/images/armario-4.png",
+    "/images/armario-5.png",
+    "/images/armario-6.png"
+  ];
+  var idx = 0;
+  var main = document.getElementById("main-product-image");
+  if(!main)return;
+  function go(i){
+    idx = i;
+    main.src = imgs[i];
+    var t = document.querySelectorAll("#thumbnails .thumbnail");
+    for(var j=0;j<t.length;j++){
+      t[j].className = t[j].className.replace(" active","");
+    }
+    if(t[i]) t[i].className += " active";
+  }
+  var btns = document.querySelectorAll("#thumbnails .thumbnail");
+  for(var k=0;k<btns.length;k++){
+    (function(i){ btns[i].onclick = function(){ go(i); }; })(k);
+  }
+  var p = document.getElementById("gallery-prev");
+  var n = document.getElementById("gallery-next");
+  if(p) p.onclick = function(){ go(idx===0?imgs.length-1:idx-1); };
+  if(n) n.onclick = function(){ go((idx+1)%imgs.length); };
+  var gm = document.querySelector(".gallery-main");
+  if(gm){
+    var sx=0;
+    gm.addEventListener("touchstart",function(e){ sx=e.changedTouches[0].screenX; },{passive:true});
+    gm.addEventListener("touchend",function(e){
+      var d=sx-e.changedTouches[0].screenX;
+      if(Math.abs(d)>50) go(d>0?(idx+1)%imgs.length:idx===0?imgs.length-1:idx-1);
+    },{passive:true});
+  }
+})();
+`}} />
+
             <div className="product-info">
               <h1>FlexHome - Armário Multifuncional</h1>
               <p className="subtitle product-offer">[PAGUE 1 LEVE 2]</p>
