@@ -11,10 +11,13 @@ function CheckoutContent() {
   const price = Number(searchParams.get("price")) || 109.9;
   const compareAt = Number(searchParams.get("compareAt")) || 219.8;
   const units = Number(searchParams.get("units")) || 2;
+  const unitPrice = price / units;
+  const unitCompare = compareAt / units;
   const image = searchParams.get("image") || "/images/dYdvdqs6VrAy.png";
   const title = searchParams.get("title") || "FlexHome - Armário Multifuncional [PAGUE 1 LEVE 2]";
 
   const [step, setStep] = useState(1);
+  const [selectedQty, setSelectedQty] = useState(units);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -229,9 +232,9 @@ function CheckoutContent() {
           email: email.trim(),
           phone: phone.replace(/\D/g, ""),
           cpf: cpf.replace(/\D/g, ""),
-          amount: price,
+          amount: unitPrice * selectedQty,
           title,
-          quantity: units,
+          quantity: selectedQty,
           address: {
             zip: cep.replace(/\D/g, ""),
             street: street.trim(),
@@ -589,24 +592,32 @@ function CheckoutContent() {
               <img src={image} alt={title} />
               <div>
                 <strong>{title}</strong>
-                <span>Cor: {colorName} · Qtd: {units}</span>
-                <span>Variante: {variant}</span>
-                <b>R$ {price.toFixed(2)}</b>
+                <span>Cor: {colorName} · Variante: {variant}</span>
+                <b>R$ {(unitPrice * selectedQty).toFixed(2)}</b>
               </div>
             </div>
           </div>
 
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "14px 0", padding: "10px 14px", border: "1px solid var(--line)", borderRadius: 11, background: "#faf8f7" }}>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>Quantidade</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+              <button type="button" onClick={() => setSelectedQty(Math.max(1, selectedQty - 1))} disabled={selectedQty <= 1} style={{ width: 36, height: 36, border: "1px solid var(--line)", borderRadius: "9px 0 0 9px", background: "#fff", fontWeight: 900, cursor: "pointer", opacity: selectedQty <= 1 ? 0.4 : 1 }}>−</button>
+              <span style={{ width: 44, textAlign: "center", fontWeight: 900, fontSize: 15, borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", lineHeight: "36px" }}>{selectedQty}</span>
+              <button type="button" onClick={() => setSelectedQty(Math.min(5, selectedQty + 1))} disabled={selectedQty >= 5} style={{ width: 36, height: 36, border: "1px solid var(--line)", borderRadius: "0 9px 9px 0", background: "#fff", fontWeight: 900, cursor: "pointer", opacity: selectedQty >= 5 ? 0.4 : 1 }}>+</button>
+            </div>
+          </div>
+
           <div className="summary-totals">
-            <div><span>Subtotal ({units} item(ns))</span><strong>R$ {price.toFixed(2)}</strong></div>
+            <div><span>Subtotal ({selectedQty} item(ns))</span><strong>R$ {(unitPrice * selectedQty).toFixed(2)}</strong></div>
             <div><span>Frete</span><strong style={{ color: "#167555" }}>Grátis</strong></div>
             <div className="grand-total">
               <span>Total</span>
-              <strong>R$ {price.toFixed(2)}</strong>
+              <strong>R$ {(unitPrice * selectedQty).toFixed(2)}</strong>
             </div>
           </div>
 
           <div className="savings-highlight" style={{ fontSize: 12 }}>
-            💰 Você economiza <strong>R$ {(compareAt - price).toFixed(2)}</strong> nesta oferta!
+            💰 Você economiza <strong>R$ {(unitCompare * selectedQty - unitPrice * selectedQty).toFixed(2)}</strong> nesta oferta!
           </div>
 
           <div className="guarantee" style={{ marginTop: 14, border: 0, borderTop: "1px solid var(--line)", borderRadius: 0, background: "none", color: "var(--muted)", padding: "14px 0 0", fontSize: 12 }}>
