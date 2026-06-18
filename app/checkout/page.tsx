@@ -17,6 +17,7 @@ function CheckoutContent() {
 
   const [step, setStep] = useState(1);
   const [selectedQty, setSelectedQty] = useState(1);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -585,39 +586,47 @@ function CheckoutContent() {
         </div>
 
         <div className="order-summary">
-          <h2>Resumo do pedido</h2>
-          <div className="summary-items">
-            <div className="summary-item">
-              <img src={image} alt={title} />
-              <div>
-                <strong>{title}</strong>
-                <span>Cor: {colorName} · Variante: {variant}</span>
-                <b>R$ {(kitPrice * selectedQty).toFixed(2)}</b>
+          <button type="button" onClick={() => setSummaryOpen(!summaryOpen)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", border: 0, background: "none", cursor: "pointer", padding: 0, font: "inherit" }}>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 900 }}>Resumo do pedido</h2>
+            <span style={{ fontSize: 13, color: "var(--muted)" }}>R$ {(kitPrice * selectedQty).toFixed(2)} {summaryOpen ? "▲" : "▼"}</span>
+          </button>
+
+          {summaryOpen && (
+            <>
+              <div className="summary-items" style={{ marginTop: 14 }}>
+                <div className="summary-item">
+                  <img src={image} alt={title} />
+                  <div>
+                    <strong>{title}</strong>
+                    <span>Cor: {colorName} · Variante: {variant}</span>
+                    <b>R$ {(kitPrice * selectedQty).toFixed(2)}</b>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "14px 0", padding: "10px 14px", border: "1px solid var(--line)", borderRadius: 11, background: "#faf8f7" }}>
-            <span style={{ fontSize: 13, fontWeight: 700 }}>Quantidade</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-              <button type="button" onClick={() => setSelectedQty(Math.max(1, selectedQty - 1))} disabled={selectedQty <= 1} style={{ width: 36, height: 36, border: "1px solid var(--line)", borderRadius: "9px 0 0 9px", background: "#fff", fontWeight: 900, cursor: "pointer", opacity: selectedQty <= 1 ? 0.4 : 1 }}>−</button>
-              <span style={{ width: 44, textAlign: "center", fontWeight: 900, fontSize: 15, borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", lineHeight: "36px" }}>{selectedQty}</span>
-              <button type="button" onClick={() => setSelectedQty(Math.min(5, selectedQty + 1))} disabled={selectedQty >= 5} style={{ width: 36, height: 36, border: "1px solid var(--line)", borderRadius: "0 9px 9px 0", background: "#fff", fontWeight: 900, cursor: "pointer", opacity: selectedQty >= 5 ? 0.4 : 1 }}>+</button>
-            </div>
-          </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "12px 0", padding: "10px 14px", border: "1px solid var(--line)", borderRadius: 11, background: "#faf8f7" }}>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>Quantidade</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+                  <button type="button" onClick={() => setSelectedQty(Math.max(1, selectedQty - 1))} disabled={selectedQty <= 1} style={{ width: 34, height: 34, border: "1px solid var(--line)", borderRadius: "8px 0 0 8px", background: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, opacity: selectedQty <= 1 ? 0.4 : 1, lineHeight: 1 }}>−</button>
+                  <span style={{ width: 40, textAlign: "center", fontWeight: 900, fontSize: 14, borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", lineHeight: "34px" }}>{selectedQty}</span>
+                  <button type="button" onClick={() => setSelectedQty(Math.min(5, selectedQty + 1))} disabled={selectedQty >= 5} style={{ width: 34, height: 34, border: "1px solid var(--line)", borderRadius: "0 8px 8px 0", background: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, opacity: selectedQty >= 5 ? 0.4 : 1, lineHeight: 1 }}>+</button>
+                </div>
+              </div>
 
-          <div className="summary-totals">
-            <div><span>Subtotal ({selectedQty} item(ns))</span><strong>R$ {(kitPrice * selectedQty).toFixed(2)}</strong></div>
-            <div><span>Frete</span><strong style={{ color: "#167555" }}>Grátis</strong></div>
-            <div className="grand-total">
-              <span>Total</span>
-              <strong>R$ {(kitPrice * selectedQty).toFixed(2)}</strong>
-            </div>
-          </div>
+              <div className="summary-totals">
+                <div><span>Subtotal ({selectedQty} un)</span><strong>R$ {(kitPrice * selectedQty).toFixed(2)}</strong></div>
+                <div><span>Frete</span><strong style={{ color: "#167555" }}>Grátis</strong></div>
+                <div className="grand-total">
+                  <span>Total</span>
+                  <strong>R$ {(kitPrice * selectedQty).toFixed(2)}</strong>
+                </div>
+              </div>
 
-          <div className="savings-highlight" style={{ fontSize: 12 }}>
-            💰 Você economiza <strong>R$ {(kitCompare * selectedQty - kitPrice * selectedQty).toFixed(2)}</strong> nesta oferta!
-          </div>
+              <div className="savings-highlight" style={{ fontSize: 11, margin: "12px 0 0" }}>
+                💰 Economia de <strong>R$ {(kitCompare * selectedQty - kitPrice * selectedQty).toFixed(2)}</strong>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
