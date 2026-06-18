@@ -20,131 +20,123 @@
     imageIndex: 0
   };
 
-  var mainImage = document.getElementById("main-product-image");
-  var thumbnails = document.getElementById("thumbnails");
-  var currentPrice = document.getElementById("current-price");
-  var cartLayer = document.getElementById("cart-layer");
-  var cartItems = document.getElementById("cart-items");
-  var cartFooter = document.getElementById("cart-footer");
-  var toast = document.getElementById("toast");
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function qsa(sel, ctx) {
+    return Array.prototype.slice.call((ctx || document).querySelectorAll(sel));
+  }
+
+  function forEach(arr, fn) {
+    Array.prototype.forEach.call(arr, fn);
+  }
+
+  var mainImage = byId("main-product-image");
+  var cartLayer = byId("cart-layer");
+  var cartItems = byId("cart-items");
+  var cartFooter = byId("cart-footer");
+  var toast = byId("toast");
 
   function setImage(index) {
     selection.imageIndex = index;
     mainImage.src = galleryImages[index].image;
     mainImage.alt = galleryImages[index].name;
-
-    document.querySelectorAll("[data-image-index]").forEach(function (button) {
-      button.classList.toggle("active", Number(button.dataset.imageIndex) === index);
+    forEach(document.querySelectorAll("[data-image-index]"), function (button) {
+      if (button.classList) {
+        button.classList.toggle("active", Number(button.getAttribute("data-image-index")) === index);
+      } else {
+        var c = String(button.className || "");
+        var active = Number(button.getAttribute("data-image-index")) === index;
+        button.className = active && c.indexOf("active") === -1 ? c + " active" : c.replace(" active", "");
+      }
     });
   }
 
-  function setupGalleryControls() {
-    var thumbs = document.querySelectorAll("#thumbnails .thumbnail");
-    thumbs.forEach(function (thumb, index) {
+  function setupGallery() {
+    forEach(qsa("#thumbnails .thumbnail"), function (thumb, index) {
       thumb.addEventListener("click", function () { setImage(index); });
     });
 
+    var prev = byId("gallery-prev");
+    var next = byId("gallery-next");
+    if (prev) prev.addEventListener("click", function () {
+      setImage(selection.imageIndex === 0 ? galleryImages.length - 1 : selection.imageIndex - 1);
+    });
+    if (next) next.addEventListener("click", function () {
+      setImage((selection.imageIndex + 1) % galleryImages.length);
+    });
+
     var galleryMain = document.querySelector(".gallery-main");
-    var touchStartX = 0;
-    var touchEndX = 0;
-
-    galleryMain.addEventListener("touchstart", function (e) {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    galleryMain.addEventListener("touchend", function (e) {
-      touchEndX = e.changedTouches[0].screenX;
-      var diff = touchStartX - touchEndX;
-      if (Math.abs(diff) > 50) {
-        if (diff > 0) {
-          setImage((selection.imageIndex + 1) % galleryImages.length);
-        } else {
-          setImage(selection.imageIndex === 0 ? galleryImages.length - 1 : selection.imageIndex - 1);
+    if (galleryMain) {
+      var touchStartX = 0;
+      galleryMain.addEventListener("touchstart", function (e) {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+      galleryMain.addEventListener("touchend", function (e) {
+        var diff = touchStartX - e.changedTouches[0].screenX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            setImage((selection.imageIndex + 1) % galleryImages.length);
+          } else {
+            setImage(selection.imageIndex === 0 ? galleryImages.length - 1 : selection.imageIndex - 1);
+          }
         }
-      }
-    }, { passive: true });
+      }, { passive: true });
+    }
   }
 
-  function buildReviewsPagination() {
+  function setupReviews() {
     var reviewsColumn = document.querySelector(".reviews-column");
-    var pagination = document.getElementById("reviews-pagination");
+    var pagination = byId("reviews-pagination");
     if (!reviewsColumn || !pagination) return;
 
-    var reviews = Array.prototype.slice.call(reviewsColumn.querySelectorAll(".review-card"));
-    var reviewsPerPage = 4;
-    var totalPages = Math.ceil(reviews.length / reviewsPerPage);
-    var currentPage = 1;
+    var reviews = qsa(".review-card", reviewsColumn);
+    var perPage = 4;
+    var total = Math.ceil(reviews.length / perPage);
+    var current = 1;
 
-    if (totalPages <= 1) {
-      pagination.hidden = true;
-      return;
+    if (total <= 1) { pagination.hidden = true; return; }
+
+    function arrow(d) {
+      var p = d === "prev" ? "15 18 9 12 15 6" : "9 18 15 12 9 6";
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="' + p + '"></polyline></svg>';
     }
 
-    function arrowIcon(direction) {
-      var path = direction === "previous" ? "15 18 9 12 15 6" : "9 18 15 12 9 6";
-      return '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="' + path + '"></polyline></svg>';
+    function btn(label, page, opts) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "reviews-page-button" + (opts.active ? " active" : "");
+      b.innerHTML = opts.icon || label;
+      b.disabled = opts.disabled;
+      b.setAttribute("aria-label", opts.ariaLabel || "P\u00e1gina " + label);
+      if (opts.active) b.setAttribute("aria-current", "page");
+      b.addEventListener("click", function () { show(page, true); });
+      return b;
     }
 
-    function pageButton(label, page, options) {
-      var button = document.createElement("button");
-      button.type = "button";
-      button.className = "reviews-page-button" + (options.active ? " active" : "");
-      button.innerHTML = options.icon || label;
-      button.disabled = options.disabled;
-      button.setAttribute("aria-label", options.ariaLabel || "Página " + label);
-      if (options.active) button.setAttribute("aria-current", "page");
-      button.addEventListener("click", function () {
-        showPage(page, true);
-      });
-      return button;
-    }
-
-    function renderPagination() {
+    function render() {
       pagination.innerHTML = "";
-      pagination.appendChild(pageButton("Anterior", currentPage - 1, {
-        disabled: currentPage === 1,
-        icon: arrowIcon("previous"),
-        ariaLabel: "Página anterior"
-      }));
-
-      for (var page = 1; page <= totalPages; page += 1) {
-        pagination.appendChild(pageButton(String(page), page, {
-          active: page === currentPage,
-          disabled: false
-        }));
+      pagination.appendChild(btn("Anterior", current - 1, { disabled: current === 1, icon: arrow("prev"), ariaLabel: "P\u00e1gina anterior" }));
+      for (var p = 1; p <= total; p += 1) {
+        pagination.appendChild(btn(String(p), p, { active: p === current, disabled: false }));
       }
-
-      pagination.appendChild(pageButton("Próxima", currentPage + 1, {
-        disabled: currentPage === totalPages,
-        icon: arrowIcon("next"),
-        ariaLabel: "Próxima página"
-      }));
+      pagination.appendChild(btn("Pr\u00f3xima", current + 1, { disabled: current === total, icon: arrow("next"), ariaLabel: "Pr\u00f3xima p\u00e1gina" }));
     }
 
-    function showPage(page, shouldScroll) {
-      currentPage = Math.max(1, Math.min(page, totalPages));
-      var start = (currentPage - 1) * reviewsPerPage;
-      var end = start + reviewsPerPage;
-
-      reviews.forEach(function (review, index) {
-        review.hidden = index < start || index >= end;
-      });
-
-      renderPagination();
-
+    function show(page, shouldScroll) {
+      current = Math.max(1, Math.min(page, total));
+      var start = (current - 1) * perPage;
+      var end = start + perPage;
+      forEach(reviews, function (r, i) { r.hidden = i < start || i >= end; });
+      render();
       if (shouldScroll) {
-        document.getElementById("reviews-title").scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
+        var t = byId("reviews-title");
+        if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
 
-    showPage(1, false);
-  }
-
-  function checkoutUrl(item) {
-    return variantUrls[item.variant] || "https://seguro.triunfohomedesign.com/api/public/shopify?product=3326933997479&store=33269";
+    show(1, false);
   }
 
   var variantUrls = {
@@ -152,24 +144,6 @@
     "2 Brancos":         "https://seguro.triunfohomedesign.com/api/public/shopify?product=3326971813372&store=33269",
     "1 Preto e 1 Branco":"https://seguro.triunfohomedesign.com/api/public/shopify?product=3326933997479&store=33269"
   };
-
-  function purchaseUrl(item) {
-    var params = new URLSearchParams({
-      variant: item.variant,
-      color: item.color,
-      colorName: item.colorName,
-      price: String(item.price),
-      compareAt: String(item.compareAt),
-      units: String(item.units),
-      image: item.image,
-      title: item.title
-    });
-    return "/checkout?" + params.toString();
-  }
-
-  function goToPurchase() {
-    window.location.href = purchaseUrl(currentItem());
-  }
 
   function currentItem() {
     return {
@@ -182,17 +156,33 @@
       compareAt: selection.compareAt,
       variant: selection.variant,
       image: selection.color.image,
-      title: "FlexHome - Armário Multifuncional [PAGUE 1 LEVE 2]"
+      title: "FlexHome - Arm\u00e1rio Multifuncional [PAGUE 1 LEVE 2]"
     };
   }
 
-  function showToast(message) {
-    toast.textContent = message;
+  function purchaseUrl(item) {
+    var p = [];
+    function add(k, v) { p.push(encodeURIComponent(k) + "=" + encodeURIComponent(String(v || ""))); }
+    add("variant", item.variant);
+    add("color", item.color);
+    add("colorName", item.colorName);
+    add("price", item.price);
+    add("compareAt", item.compareAt);
+    add("units", item.units);
+    add("image", item.image);
+    add("title", item.title);
+    return "/checkout?" + p.join("&");
+  }
+
+  function goToPurchase() {
+    window.location.href = purchaseUrl(currentItem());
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
     toast.classList.add("visible");
     window.clearTimeout(showToast.timer);
-    showToast.timer = window.setTimeout(function () {
-      toast.classList.remove("visible");
-    }, 2600);
+    showToast.timer = window.setTimeout(function () { toast.classList.remove("visible"); }, 2600);
   }
 
   function openCart() {
@@ -210,194 +200,227 @@
 
   function renderCart() {
     var items = window.CoberdromStore.getCart();
-    var total = items.reduce(function (sum, item) { return sum + Number(item.price); }, 0);
+    var total = items.reduce(function (s, i) { return s + Number(i.price); }, 0);
 
-    document.getElementById("cart-count").textContent = "(" + items.length + ")";
-    document.getElementById("header-cart-count").textContent = String(items.length);
-    document.getElementById("cart-total").textContent = window.CoberdromStore.money(total);
+    var cc = byId("cart-count");
+    var hc = byId("header-cart-count");
+    var ct = byId("cart-total");
+
+    if (cc) cc.textContent = "(" + items.length + ")";
+    if (hc) hc.textContent = String(items.length);
+    if (ct) ct.textContent = window.CoberdromStore.money(total);
+
     cartItems.innerHTML = "";
     cartFooter.hidden = items.length === 0;
 
     if (!items.length) {
-      cartItems.innerHTML = '<div class="empty-cart"><strong>Seu carrinho está vazio.</strong><p>Escolha uma cor, um tamanho e adicione o produto.</p></div>';
+      cartItems.innerHTML = '<div class="empty-cart"><strong>Seu carrinho est\u00e1 vazio.</strong><p>Escolha uma cor, um tamanho e adicione o produto.</p></div>';
       return;
     }
 
-    items.forEach(function (item) {
-      var article = document.createElement("article");
-      article.className = "cart-item";
-      article.innerHTML =
-        '<img src="' + item.image + '" alt="' + item.title + '">' +
+    forEach(items, function (item) {
+      var a = document.createElement("article");
+      a.className = "cart-item";
+      a.innerHTML = '<img src="' + item.image + '" alt="' + item.title + '">' +
         '<div><strong>' + item.title + '</strong>' +
-        '<span>Cor: ' + item.colorName + ' · Tam: ' + item.size + '</span>' +
+        '<span>Cor: ' + item.colorName + ' \u00b7 Tam: ' + item.size + '</span>' +
         '<span>Quantidade: ' + item.units + '</span>' +
         '<b>' + window.CoberdromStore.money(item.price) + '</b></div>' +
-        '<button type="button" aria-label="Remover item" data-remove-id="' + item.id + '">×</button>';
-      cartItems.appendChild(article);
+        '<button type="button" aria-label="Remover item" data-remove-id="' + item.id + '">\u00d7</button>';
+      cartItems.appendChild(a);
     });
   }
 
-  setupGalleryControls();
-  buildReviewsPagination();
-  document.getElementById("footer-year").textContent = new Date().getFullYear();
-  document.getElementById("offer-color-selector").hidden = false;
-  document.getElementById("special-offer-toggle").classList.add("open");
-  document.getElementById("special-offer-toggle").setAttribute("aria-expanded", "true");
+  function init() {
+    try { setupGallery(); } catch (e) {}
+    try { setupReviews(); } catch (e) {}
 
-  document.getElementById("gallery-prev").addEventListener("click", function () {
-    setImage(selection.imageIndex === 0 ? galleryImages.length - 1 : selection.imageIndex - 1);
-  });
-  document.getElementById("gallery-next").addEventListener("click", function () {
-    setImage((selection.imageIndex + 1) % galleryImages.length);
-  });
+    var fy = byId("footer-year");
+    if (fy) fy.textContent = new Date().getFullYear();
 
-  document.getElementById("special-offer-toggle").addEventListener("click", function () {
-    var selector = document.getElementById("offer-color-selector");
-    var willOpen = selector.hidden;
-    selector.hidden = !willOpen;
-    this.classList.toggle("open", willOpen);
-    this.setAttribute("aria-expanded", willOpen ? "true" : "false");
-  });
+    var colorSel = byId("offer-color-selector");
+    if (colorSel) colorSel.hidden = false;
 
-  document.getElementById("variant-select").addEventListener("change", function () {
-    selection.variant = this.value;
-  });
-
-  document.getElementById("buy-now").addEventListener("click", function () {
-    goToPurchase();
-  });
-
-  (function setupShippingCalc() {
-    var input = document.getElementById("cep-calc");
-    var button = document.getElementById("cep-calc-btn");
-    var result = document.getElementById("shipping-result");
-    if (!input || !button || !result) return;
-
-    function onlyDigits(value) {
-      return String(value || "").replace(/\D/g, "");
-    }
-
-    function showResult(html, type) {
-      result.innerHTML = html;
-      result.classList.remove("is-success", "is-error");
-      result.classList.add(type === "error" ? "is-error" : "is-success");
-      result.hidden = false;
-    }
-
-    input.addEventListener("input", function () {
-      var raw = onlyDigits(input.value).slice(0, 8);
-      input.value = raw.replace(/^(\d{5})(\d)/, "$1-$2");
-    });
-
-    async function calculate() {
-      var cep = onlyDigits(input.value);
-      if (cep.length !== 8) {
-        showResult("Digite um CEP válido com 8 dígitos.", "error");
-        return;
-      }
-
-      button.disabled = true;
-      button.textContent = "...";
-      var local = "";
-      try {
-        var controller = new AbortController();
-        var timeout = setTimeout(function () { controller.abort(); }, 6000);
-        var response = await fetch("https://viacep.com.br/ws/" + cep + "/json/", { signal: controller.signal });
-        clearTimeout(timeout);
-        var data = await response.json();
-        if (!data.erro && data.localidade) {
-          local = data.localidade + (data.uf ? " - " + data.uf : "");
-        }
-      } catch (error) {
-        local = "";
-      } finally {
-        button.disabled = false;
-        button.textContent = "Calcular";
-      }
-
-      var destino = local ? "para <strong>" + local + "</strong>" : "para o seu endereço";
-      showResult(
-        '<span class="ship-free">✓ FRETE GRÁTIS</span> ' + destino + "<br>" +
-          "Entrega estimada em <strong>3 a 10 dias úteis</strong> após a confirmação.",
-        "success"
-      );
-    }
-
-    button.addEventListener("click", calculate);
-    input.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") calculate();
-    });
-  })();
-
-  document.getElementById("cart-items").addEventListener("click", function (event) {
-    var button = event.target.closest("[data-remove-id]");
-    if (!button) return;
-    window.CoberdromStore.removeItem(button.dataset.removeId);
-    renderCart();
-  });
-  document.getElementById("close-cart").addEventListener("click", closeCart);
-  document.getElementById("cart-backdrop").addEventListener("click", closeCart);
-  document.getElementById("header-cart-button").addEventListener("click", openCart);
-  document.getElementById("cart-checkout").addEventListener("click", function () {
-    var items = window.CoberdromStore.getCart();
-    if (items.length > 0) {
-      var item = items[0];
-      var params = new URLSearchParams({
-        variant: item.variant || selection.variant,
-        color: item.color || selection.color.id,
-        colorName: item.colorName || selection.color.name,
-        price: String(item.price || selection.price),
-        compareAt: String(item.compareAt || selection.compareAt),
-        units: String(item.units || selection.units),
-        image: item.image || selection.color.image,
-        title: item.title || currentItem().title
+    var offerToggle = byId("special-offer-toggle");
+    if (offerToggle) {
+      offerToggle.classList.add("open");
+      offerToggle.setAttribute("aria-expanded", "true");
+      offerToggle.addEventListener("click", function () {
+        var sel = byId("offer-color-selector");
+        var willOpen = sel.hidden;
+        sel.hidden = !willOpen;
+        this.classList.toggle("open", willOpen);
+        this.setAttribute("aria-expanded", willOpen ? "true" : "false");
       });
-      window.location.href = "/checkout?" + params.toString();
-    } else {
-      goToPurchase();
     }
-  });
 
-  document.getElementById("sticky-buy").addEventListener("click", function () {
-    goToPurchase();
-  });
+    var variantSel = byId("variant-select");
+    if (variantSel) {
+      variantSel.addEventListener("change", function () { selection.variant = this.value; });
+    }
 
-  document.getElementById("menu-button").addEventListener("click", function () {
-    var menu = document.getElementById("header-menu");
-    var willOpen = menu.hidden;
-    menu.hidden = !willOpen;
-    this.setAttribute("aria-expanded", willOpen ? "true" : "false");
-  });
+    var buyNow = byId("buy-now");
+    if (buyNow) buyNow.addEventListener("click", goToPurchase);
 
-  document.querySelectorAll("#header-menu a").forEach(function (link) {
-    link.addEventListener("click", function (event) {
-      var target = document.querySelector(link.getAttribute("href"));
-      if (target) {
-        event.preventDefault();
-        target.scrollIntoView({ behavior: "smooth" });
+    var stickyBuy = byId("sticky-buy");
+    if (stickyBuy) stickyBuy.addEventListener("click", goToPurchase);
+
+    (function shippingCalc() {
+      var input = byId("cep-calc");
+      var button = byId("cep-calc-btn");
+      var result = byId("shipping-result");
+      if (!input || !button || !result) return;
+
+      function digits(v) { return String(v || "").replace(/\D/g, ""); }
+
+      function showResult(html, type) {
+        result.innerHTML = html;
+        result.className = result.className.replace(/\bis-(success|error)\b/g, "");
+        result.classList.add(type === "error" ? "is-error" : "is-success");
+        result.hidden = false;
       }
-      document.getElementById("header-menu").hidden = true;
-      document.getElementById("menu-button").setAttribute("aria-expanded", "false");
-    });
-  });
 
-  document.getElementById("store-search").addEventListener("submit", function (event) {
-    event.preventDefault();
-    var query = document.getElementById("store-search-input").value.trim().toLowerCase();
-    if (!query || "flexhome armário armario multifuncional organização organizacao cozinha".includes(query)) {
-      document.getElementById("produto").scrollIntoView({ behavior: "smooth" });
-      return;
+      input.addEventListener("input", function () {
+        var raw = digits(input.value).slice(0, 8);
+        input.value = raw.replace(/^(\d{5})(\d)/, "$1-$2");
+      });
+
+      function calculate() {
+        var cep = digits(input.value);
+        if (cep.length !== 8) {
+          showResult("Digite um CEP v\u00e1lido com 8 d\u00edgitos.", "error");
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = "...";
+        showResult("Consultando...", "success");
+
+        var xhr = new XMLHttpRequest();
+        var timedOut = false;
+        var timer = setTimeout(function () { timedOut = true; xhr.abort(); }, 6000);
+
+        xhr.open("GET", "https://viacep.com.br/ws/" + cep + "/json/", true);
+        xhr.onload = function () {
+          clearTimeout(timer);
+          button.disabled = false;
+          button.textContent = "Calcular";
+          if (timedOut) return;
+          try {
+            var data = JSON.parse(xhr.responseText);
+            var local = (!data.erro && data.localidade) ? data.localidade + (data.uf ? " - " + data.uf : "") : "";
+            var destino = local ? "para <strong>" + local + "</strong>" : "para o seu endere\u00e7o";
+            showResult(
+              '<span class="ship-free">\u2713 FRETE GR\u00c1TIS</span> ' + destino + "<br>" +
+                "Entrega estimada em <strong>3 a 10 dias \u00fateis</strong> ap\u00f3s a confirma\u00e7\u00e3o.",
+              "success"
+            );
+          } catch (e) {
+            showResult("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 10 dias \u00fateis</strong>.", "success");
+          }
+        };
+        xhr.onerror = function () {
+          clearTimeout(timer);
+          button.disabled = false;
+          button.textContent = "Calcular";
+          showResult("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 10 dias \u00fateis</strong>.", "success");
+        };
+        xhr.send();
+      }
+
+      button.addEventListener("click", calculate);
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") calculate(); });
+    })();
+
+    byId("close-cart") && byId("close-cart").addEventListener("click", closeCart);
+    byId("cart-backdrop") && byId("cart-backdrop").addEventListener("click", closeCart);
+    byId("header-cart-button") && byId("header-cart-button").addEventListener("click", openCart);
+
+    var cartCheckout = byId("cart-checkout");
+    if (cartCheckout) {
+      cartCheckout.addEventListener("click", function () {
+        var items = window.CoberdromStore.getCart();
+        if (items.length > 0) {
+          var item = items[0];
+          var params = purchaseUrl({
+            variant: item.variant || selection.variant,
+            color: item.color || selection.color.id,
+            colorName: item.colorName || selection.color.name,
+            price: String(item.price || selection.price),
+            compareAt: String(item.compareAt || selection.compareAt),
+            units: String(item.units || selection.units),
+            image: item.image || selection.color.image,
+            title: item.title || currentItem().title
+          });
+          window.location.href = params;
+        } else {
+          goToPurchase();
+        }
+      });
     }
-    showToast('Nenhum resultado para "' + query + '".');
-  });
 
-  window.addEventListener("scroll", function () {
-    var sticky = document.getElementById("sticky-purchase");
-    var visible = window.scrollY > 700;
-    sticky.classList.toggle("visible", visible);
-    sticky.setAttribute("aria-hidden", visible ? "false" : "true");
-  }, { passive: true });
+    var menuBtn = byId("menu-button");
+    if (menuBtn) {
+      menuBtn.addEventListener("click", function () {
+        var menu = byId("header-menu");
+        var willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        this.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      });
+    }
 
-  window.addEventListener("coberdrom:cart", renderCart);
-  renderCart();
+    forEach(qsa("#header-menu a"), function (link) {
+      link.addEventListener("click", function (e) {
+        var target = document.querySelector(link.getAttribute("href"));
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: "smooth" }); }
+        var menu = byId("header-menu");
+        if (menu) menu.hidden = true;
+        var mb = byId("menu-button");
+        if (mb) mb.setAttribute("aria-expanded", "false");
+      });
+    });
+
+    var search = byId("store-search");
+    if (search) {
+      search.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var q = byId("store-search-input").value.trim().toLowerCase();
+        if (!q || "flexhome arm\u00e1rio armario multifuncional organiza\u00e7\u00e3o organizacao cozinha".indexOf(q) !== -1) {
+          var p = byId("produto");
+          if (p) p.scrollIntoView({ behavior: "smooth" });
+          return;
+        }
+        showToast('Nenhum resultado para "' + q + '".');
+      });
+    }
+
+    window.addEventListener("scroll", function () {
+      var s = byId("sticky-purchase");
+      if (!s) return;
+      var v = window.scrollY > 700;
+      s.classList.toggle("visible", v);
+      s.setAttribute("aria-hidden", v ? "false" : "true");
+    }, { passive: true });
+
+    window.addEventListener("coberdrom:cart", renderCart);
+    renderCart();
+
+    try {
+      var el = byId("cart-items");
+      if (el) {
+        el.addEventListener("click", function (e) {
+          var b = e.target.closest ? e.target.closest("[data-remove-id]") : null;
+          if (!b) return;
+          window.CoberdromStore.removeItem(b.getAttribute("data-remove-id"));
+          renderCart();
+        });
+      }
+    } catch (e) {}
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();
