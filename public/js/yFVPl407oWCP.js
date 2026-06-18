@@ -236,72 +236,7 @@
     var stickyBuy = byId("sticky-buy");
     if (stickyBuy) stickyBuy.addEventListener("click", goToPurchase);
 
-    (function shippingCalc() {
-      var input = byId("cep-calc");
-      var button = byId("cep-calc-btn");
-      var result = byId("shipping-result");
-      if (!input || !button || !result) return;
-
-      function digits(v) { return String(v || "").replace(/\D/g, ""); }
-
-      function showResult(html, type) {
-        result.innerHTML = html;
-        result.className = result.className.replace(/\bis-(success|error)\b/g, "");
-        result.classList.add(type === "error" ? "is-error" : "is-success");
-        result.hidden = false;
-      }
-
-      input.addEventListener("input", function () {
-        var raw = digits(input.value).slice(0, 8);
-        input.value = raw.replace(/^(\d{5})(\d)/, "$1-$2");
-      });
-
-      function calculate() {
-        var cep = digits(input.value);
-        if (cep.length !== 8) {
-          showResult("Digite um CEP v\u00e1lido com 8 d\u00edgitos.", "error");
-          return;
-        }
-
-        button.disabled = true;
-        button.textContent = "...";
-        showResult("Consultando...", "success");
-
-        var xhr = new XMLHttpRequest();
-        var timedOut = false;
-        var timer = setTimeout(function () { timedOut = true; xhr.abort(); }, 6000);
-
-        xhr.open("GET", "https://viacep.com.br/ws/" + cep + "/json/", true);
-        xhr.onload = function () {
-          clearTimeout(timer);
-          button.disabled = false;
-          button.textContent = "Calcular";
-          if (timedOut) return;
-          try {
-            var data = JSON.parse(xhr.responseText);
-            var local = (!data.erro && data.localidade) ? data.localidade + (data.uf ? " - " + data.uf : "") : "";
-            var destino = local ? "para <strong>" + local + "</strong>" : "para o seu endere\u00e7o";
-            showResult(
-              '<span class="ship-free">\u2713 FRETE GR\u00c1TIS</span> ' + destino + "<br>" +
-                "Entrega estimada em <strong>3 a 6 dias \u00fateis</strong> ap\u00f3s a confirma\u00e7\u00e3o.",
-              "success"
-            );
-          } catch (e) {
-            showResult("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.", "success");
-          }
-        };
-        xhr.onerror = function () {
-          clearTimeout(timer);
-          button.disabled = false;
-          button.textContent = "Calcular";
-          showResult("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.", "success");
-        };
-        xhr.send();
-      }
-
-      button.addEventListener("click", calculate);
-      input.addEventListener("keydown", function (e) { if (e.key === "Enter") calculate(); });
-    })();
+    /* shipping calc handled by inline script in page.tsx */
 
     byId("close-cart") && byId("close-cart").addEventListener("click", closeCart);
     byId("cart-backdrop") && byId("cart-backdrop").addEventListener("click", closeCart);

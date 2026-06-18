@@ -151,6 +151,58 @@ function __next(){__go((__idx+1)%__imgs.length);}
                 <div className="shipping-calc-result" id="shipping-result" hidden></div>
               </div>
 
+              <script dangerouslySetInnerHTML={{ __html: `
+(function(){
+  var inp = document.getElementById("cep-calc");
+  var btn = document.getElementById("cep-calc-btn");
+  var res = document.getElementById("shipping-result");
+  if(!inp||!btn||!res)return;
+  function d(v){return String(v||"").replace(/\D/g,"");}
+  function show(h,t){
+    res.innerHTML = h;
+    res.className = res.className.replace(/\bis-(\w+)\b/g,"");
+    res.classList.add(t==="error"?"is-error":"is-success");
+    res.hidden = false;
+  }
+  inp.addEventListener("input",function(){
+    var raw = d(inp.value).slice(0,8);
+    inp.value = raw.replace(/^(\\d{5})(\\d)/,"$1-$2");
+  });
+  function calc(){
+    var cep = d(inp.value);
+    if(cep.length!==8){show("Digite um CEP v\u00e1lido com 8 d\u00edgitos.","error");return;}
+    btn.disabled=true;
+    btn.textContent="...";
+    show("Consultando...","success");
+    var x = new XMLHttpRequest();
+    var t = setTimeout(function(){x.abort();},6000);
+    x.open("GET","https://viacep.com.br/ws/"+cep+"/json/",true);
+    x.onload=function(){
+      clearTimeout(t);
+      btn.disabled=false;
+      btn.textContent="Calcular";
+      try{
+        var dt = JSON.parse(x.responseText);
+        var local = (!dt.erro&&dt.localidade)?dt.localidade+(dt.uf?" - "+dt.uf:""):"";
+        var dest = local?"para <strong>"+local+"</strong>":"para o seu endere\u00e7o";
+        show("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> "+dest+"<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");
+      }catch(e){
+        show("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");
+      }
+    };
+    x.onerror=function(){
+      clearTimeout(t);
+      btn.disabled=false;
+      btn.textContent="Calcular";
+      show("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");
+    };
+    x.send();
+  }
+  btn.onclick = calc;
+  inp.onkeydown = function(e){if(e.key==="Enter")calc();};
+})();
+`}} suppressHydrationWarning />
+
               <div className="purchase-guarantees">
                 <div>
                   <svg viewBox="0 0 24 24" aria-hidden="true">
