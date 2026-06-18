@@ -138,69 +138,38 @@ function __next(){__go((__idx+1)%__imgs.length);}
                 <button className="button button-primary button-large" id="buy-now">COMPRAR AGORA</button>
               </div>
 
-              <div className="shipping-calc">
-                <label htmlFor="cep-calc">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h13V6H3v7Zm13 0 3-4h2l1 4v3h-6"></path><circle cx="7" cy="17" r="2"></circle><circle cx="18" cy="17" r="2"></circle></svg>
-                  Calcular frete e prazo de entrega
-                </label>
-                <div className="shipping-calc-row">
-                  <input id="cep-calc" type="text" inputMode="numeric" autoComplete="postal-code" placeholder="Digite seu CEP" maxLength={9} />
-                  <button type="button" id="cep-calc-btn">Calcular</button>
-                </div>
-                <a className="shipping-calc-help" href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer">Não sei meu CEP</a>
-                <div className="shipping-calc-result" id="shipping-result" hidden></div>
-              </div>
-
-              <script dangerouslySetInnerHTML={{ __html: `
-(function(){
-  var inp = document.getElementById("cep-calc");
-  var btn = document.getElementById("cep-calc-btn");
-  var res = document.getElementById("shipping-result");
-  if(!inp||!btn||!res)return;
-  function d(v){return String(v||"").replace(/\\D/g,"");}
-  function show(h,t){
-    res.innerHTML = h;
-    res.className = res.className.replace(/\\bis-(\\w+)\\b/g,"");
-    res.classList.add(t==="error"?"is-error":"is-success");
-    res.hidden = false;
-  }
-  inp.addEventListener("input",function(){
-    var raw = d(inp.value).slice(0,8);
-    inp.value = raw.replace(/^(\\d{5})(\\d)/,"$1-$2");
-  });
-  function calc(){
-    var cep = d(inp.value);
-    if(cep.length!==8){show("Digite um CEP v\u00e1lido com 8 d\u00edgitos.","error");return;}
-    btn.disabled=true;
-    btn.textContent="...";
-    show("Consultando...","success");
-    var x = new XMLHttpRequest();
-    var t = setTimeout(function(){x.abort();},6000);
-    x.open("GET","https://viacep.com.br/ws/"+cep+"/json/",true);
-    x.onload=function(){
-      clearTimeout(t);
-      btn.disabled=false;
-      btn.textContent="Calcular";
-      try{
-        var dt = JSON.parse(x.responseText);
-        var local = (!dt.erro&&dt.localidade)?dt.localidade+(dt.uf?" - "+dt.uf:""):"";
-        var dest = local?"para <strong>"+local+"</strong>":"para o seu endere\u00e7o";
-        show("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> "+dest+"<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");
-      }catch(e){
-        show("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");
-      }
-    };
-    x.onerror=function(){
-      clearTimeout(t);
-      btn.disabled=false;
-      btn.textContent="Calcular";
-      show("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");
-    };
-    x.send();
-  }
-  btn.onclick = calc;
-  inp.onkeydown = function(e){if(e.key==="Enter")calc();};
-})();
+              <div dangerouslySetInnerHTML={{ __html: `
+<script>
+var __d=function(v){return String(v||"").replace(/\\D/g,"");};
+var __cepShow=function(h,t){
+  var e=document.getElementById("shipping-result");
+  if(!e)return;
+  e.innerHTML=h;
+  e.className=e.className.replace(/\\bis-(\\w+)\\b/g,"");
+  e.classList.add(t==="error"?"is-error":"is-success");
+  e.hidden=false;
+};
+var __cepCalc=function(){
+  var i=document.getElementById("cep-calc"),b=document.getElementById("cep-calc-btn"),c=__d(i.value);
+  if(c.length!==8){__cepShow("Digite um CEP v\u00e1lido com 8 d\u00edgitos.","error");return;}
+  b.disabled=true;b.textContent="...";__cepShow("Consultando...","success");
+  var x=new XMLHttpRequest(),to=setTimeout(function(){x.abort();},6000);
+  x.open("GET","https://viacep.com.br/ws/"+c+"/json/",true);
+  x.onload=function(){clearTimeout(to);b.disabled=false;b.textContent="Calcular";
+    try{var d=JSON.parse(x.responseText),l=(!d.erro&&d.localidade)?d.localidade+(d.uf?" - "+d.uf:""):"";__cepShow("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> "+(l?"para <strong>"+l+"</strong>":"para o seu endere\u00e7o")+"<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");}catch(e){__cepShow("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");}};
+  x.onerror=function(){clearTimeout(to);b.disabled=false;b.textContent="Calcular";__cepShow("<span class=\"ship-free\">\u2713 FRETE GR\u00c1TIS</span> para o seu endere\u00e7o<br>Entrega estimada em <strong>3 a 6 dias \u00fateis</strong>.","success");};
+  x.send();
+};
+</script>
+<div class="shipping-calc">
+<label for="cep-calc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h13V6H3v7Zm13 0 3-4h2l1 4v3h-6"></path><circle cx="7" cy="17" r="2"></circle><circle cx="18" cy="17" r="2"></circle></svg>Calcular frete e prazo de entrega</label>
+<div class="shipping-calc-row">
+<input id="cep-calc" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="Digite seu CEP" maxlength="9" oninput="var r=__d(this.value).slice(0,8);this.value=r.replace(/^(\\d{5})(\\d)/,'$1-$2');" onkeydown="if(event.key==='Enter')__cepCalc()" />
+<button type="button" id="cep-calc-btn" onclick="__cepCalc()">Calcular</button>
+</div>
+<a class="shipping-calc-help" href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer">N\u00e3o sei meu CEP</a>
+<div class="shipping-calc-result" id="shipping-result" hidden></div>
+</div>
 `}} suppressHydrationWarning />
 
               <div className="purchase-guarantees">
