@@ -618,27 +618,24 @@ function CheckoutContent() {
           <div className="savings-highlight" style={{ fontSize: 12 }}>
             💰 Você economiza <strong>R$ {(kitCompare * selectedQty - kitPrice * selectedQty).toFixed(2)}</strong> nesta oferta!
           </div>
-
-          <div className="guarantee" style={{ marginTop: 14, border: 0, borderTop: "1px solid var(--line)", borderRadius: 0, background: "none", color: "var(--muted)", padding: "14px 0 0", fontSize: 12 }}>
-            <div style={{ display: "grid", gap: 10 }}>
-              <span>🔒 Compra 100% segura</span>
-              <span>🛡️ Dados protegidos com criptografia SSL</span>
-              <span>✅ Pagamento processado com segurança</span>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 14, padding: 12, borderRadius: 11, border: "1px solid #d4c5a0", background: "#fdf8ed", color: "#7d6320", fontSize: 12, textAlign: "center" }}>
-            <strong>⭐ Satisfação Garantida</strong>
-            <br />7 dias para trocas. Seu dinheiro de volta se não ficar satisfeito.
-          </div>
-
-          <div style={{ marginTop: 10, fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
-            <strong>+15 mil</strong> clientes atendidos em todo o Brasil
-          </div>
         </div>
       </div>
 
       <div className="checkout-footer">
+        <div className="container" style={{ display: "grid", gap: 12, justifyContent: "center", justifyItems: "center", padding: "24px 16px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px", justifyContent: "center", fontSize: 12, color: "var(--muted)" }}>
+            <span>🔒 Compra 100% segura</span>
+            <span>🛡️ Dados protegidos com criptografia SSL</span>
+            <span>✅ Pagamento processado com segurança</span>
+            <span>📞 Atendimento via WhatsApp</span>
+          </div>
+          <div style={{ fontSize: 12, color: "#7d6320", textAlign: "center" }}>
+            <strong>⭐ Satisfação Garantida</strong> — 7 dias para trocas. Seu dinheiro de volta se não ficar satisfeito.
+          </div>
+          <div style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
+            <strong>+15 mil</strong> clientes atendidos em todo o Brasil
+          </div>
+        </div>
         <p>© {new Date().getFullYear()} Triunfo Home Design. Todos os direitos reservados.</p>
       </div>
     </div>
