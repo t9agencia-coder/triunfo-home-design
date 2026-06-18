@@ -3,11 +3,11 @@
 
   var galleryImages = [
     { name: "Armários FlexHome grafite e branco", image: "/images/dYdvdqs6VrAy.png" },
-    { name: "Armário FlexHome — foto 2", image: "/images/armario%202.webp" },
-    { name: "Armário FlexHome — foto 3", image: "/images/armario%203.webp" },
-    { name: "Armário FlexHome — foto 4", image: "/images/armario%204.webp" },
-    { name: "Armário FlexHome — foto 5", image: "/images/armario%205.webp" },
-    { name: "Armário FlexHome — foto 6", image: "/images/armario%206.webp" }
+    { name: "Armário FlexHome — foto 2", image: "/images/armario-2.webp" },
+    { name: "Armário FlexHome — foto 3", image: "/images/armario-3.webp" },
+    { name: "Armário FlexHome — foto 4", image: "/images/armario-4.webp" },
+    { name: "Armário FlexHome — foto 5", image: "/images/armario-5.webp" },
+    { name: "Armário FlexHome — foto 6", image: "/images/armario-6.webp" }
   ];
 
   var selection = {
