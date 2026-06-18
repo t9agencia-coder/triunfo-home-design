@@ -496,40 +496,10 @@ function CheckoutContent() {
                     )}
 
                     {paymentMethod === "card" && (
-                      <div style={{ marginTop: 14 }}>
-                        <div className="card-grid four">
-                          <div className="field" style={{ gridColumn: "1 / -1" }}>
-                            <label htmlFor="card-number">Número do cartão</label>
-                            <div style={{ position: "relative" }}>
-                              <input id="card-number" type="text" value={cardNumber} onChange={(e) => { setCardNumber(formatCardNumber(e.target.value)); setCardNumberTouched(true); }} placeholder="0000 0000 0000 0000" maxLength={19} className={cardNumberError ? "invalid" : ""} style={cardNumber && !cardNumberError ? { borderColor: "var(--success)" } : undefined} />
-                              {flagIcon() && <img src={flagIcon()} alt={cardFlag} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", width: 32, height: "auto" }} />}
-                            </div>
-                            <div className={`field-hint ${cardNumberError ? "error" : cardNumber && !cardNumberError ? "success" : ""}`} style={{ visibility: cardNumberTouched ? "visible" : "hidden" }}>
-                              {cardNumberError || (cardNumber && !cardNumberError ? "✓ Número válido" : ".")}
-                            </div>
-                          </div>
-                          <div className="field" style={{ gridColumn: "1 / -1" }}>
-                            <label htmlFor="card-name">Nome do titular</label>
-                            <input id="card-name" type="text" value={cardName} onChange={(e) => { setCardName(e.target.value); setCardNameTouched(true); }} placeholder="Nome impresso no cartão" className={cardNameError ? "invalid" : ""} style={cardName && !cardNameError ? { borderColor: "var(--success)" } : undefined} />
-                            <div className={`field-hint ${cardNameError ? "error" : ""}`} style={{ visibility: cardNameTouched ? "visible" : "hidden" }}>{cardNameError || "."}</div>
-                          </div>
-                          <div className="field">
-                            <label htmlFor="card-expiry">Validade</label>
-                            <input id="card-expiry" type="text" value={cardExpiry} onChange={(e) => { setCardExpiry(formatCardExpiry(e.target.value)); setCardExpiryTouched(true); }} placeholder="MM/AA" maxLength={5} className={cardExpiryError ? "invalid" : ""} style={cardExpiry && !cardExpiryError ? { borderColor: "var(--success)" } : undefined} />
-                            <div className={`field-hint ${cardExpiryError ? "error" : ""}`} style={{ visibility: cardExpiryTouched ? "visible" : "hidden" }}>{cardExpiryError || "."}</div>
-                          </div>
-                          <div className="field">
-                            <label htmlFor="card-cvv">CVV</label>
-                            <input id="card-cvv" type="text" value={cardCvv} onChange={(e) => { var d = e.target.value.replace(/\D/g, "").slice(0, 4); setCardCvv(d); setCardCvvTouched(true); }} placeholder={cardFlag === "amex" ? "0000" : "000"} maxLength={4} className={cardCvvError ? "invalid" : ""} style={cardCvv && !cardCvvError ? { borderColor: "var(--success)" } : undefined} />
-                            <div className={`field-hint ${cardCvvError ? "error" : ""}`} style={{ visibility: cardCvvTouched ? "visible" : "hidden" }}>{cardCvvError || "."}</div>
-                          </div>
-                        </div>
-                        <div className="card-note" style={{ marginTop: 10 }}>
-                          🔒 Seus dados estão protegidos com criptografia. Nenhuma informação será compartilhada.
-                        </div>
-                        <button className="button button-primary button-large" style={{ width: "100%", marginTop: 14 }} disabled={loading || !!(cardNumberError || cardNameError || cardExpiryError || cardCvvError) || !cardNumber || !cardName || !cardExpiry || !cardCvv}>
-                          {loading ? "PROCESSANDO..." : "FINALIZAR COMPRA"}
-                        </button>
+                      <div className="payment-panel" style={{ marginTop: 14, textAlign: "center", padding: "32px 16px" }}>
+                        <span style={{ fontSize: 40 }}>💳</span>
+                        <h3 style={{ margin: "12px 0 6px" }}>Cartão de crédito indisponível</h3>
+                        <p style={{ color: "var(--muted)", fontSize: 14 }}>No momento o pagamento por cartão de crédito está fora do ar. Selecione a opção <strong>PIX</strong> para finalizar sua compra.</p>
                       </div>
                     )}
                   </>
