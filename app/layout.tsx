@@ -15,7 +15,6 @@ export default function RootLayout({
     <html lang="pt-BR">
       <head>
         <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" href="/css/BfDe2pjOPHWZ.css" />
         <script
           dangerouslySetInnerHTML={{
