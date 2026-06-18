@@ -64,81 +64,30 @@ export default function Home() {
       <main>
         <section className="product-section" id="produto">
           <div className="product-layout container">
-            <div className="gallery">
-              <p className="breadcrumb gallery-breadcrumb">Casa / Organização / Armários</p>
-              <div className="gallery-main">
-                <img id="main-product-image" src="/images/dYdvdqs6VrAy.png" alt="Armários FlexHome grafite e branco" />
-                <span className="badge badge-accent">Frete grátis</span>
-                <button className="gallery-arrow gallery-prev" id="gallery-prev" aria-label="Imagem anterior">
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-                <button className="gallery-arrow gallery-next" id="gallery-next" aria-label="Próxima imagem">
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
-              </div>
-              <div className="thumbnails" id="thumbnails" aria-label="Fotos do produto">
-                <button type="button" className="thumbnail active" data-image-index="0" aria-label="Armários FlexHome grafite e branco">
-                  <img src="/images/dYdvdqs6VrAy.png" alt="" />
-                </button>
-                <button type="button" className="thumbnail" data-image-index="1" aria-label="Armário FlexHome — foto 2">
-                  <img src="/images/armario-2.png" alt="" />
-                </button>
-                <button type="button" className="thumbnail" data-image-index="2" aria-label="Armário FlexHome — foto 3">
-                  <img src="/images/armario-3.png" alt="" />
-                </button>
-                <button type="button" className="thumbnail" data-image-index="3" aria-label="Armário FlexHome — foto 4">
-                  <img src="/images/armario-4.png" alt="" />
-                </button>
-                <button type="button" className="thumbnail" data-image-index="4" aria-label="Armário FlexHome — foto 5">
-                  <img src="/images/armario-5.png" alt="" />
-                </button>
-                <button type="button" className="thumbnail" data-image-index="5" aria-label="Armário FlexHome — foto 6">
-                  <img src="/images/armario-6.png" alt="" />
-                </button>
-              </div>
-            </div>
-
-            <script dangerouslySetInnerHTML={{ __html: `
-(function(){
-  var imgs = [
-    "/images/dYdvdqs6VrAy.png",
-    "/images/armario-2.png",
-    "/images/armario-3.png",
-    "/images/armario-4.png",
-    "/images/armario-5.png",
-    "/images/armario-6.png"
-  ];
-  var idx = 0;
-  var main = document.getElementById("main-product-image");
-  if(!main)return;
-  function go(i){
-    idx = i;
-    main.src = imgs[i];
-    var t = document.querySelectorAll("#thumbnails .thumbnail");
-    for(var j=0;j<t.length;j++){
-      t[j].className = t[j].className.replace(" active","");
-    }
-    if(t[i]) t[i].className += " active";
-  }
-  var btns = document.querySelectorAll("#thumbnails .thumbnail");
-  for(var k=0;k<btns.length;k++){
-    (function(i){ btns[i].onclick = function(){ go(i); }; })(k);
-  }
-  var p = document.getElementById("gallery-prev");
-  var n = document.getElementById("gallery-next");
-  if(p) p.onclick = function(){ go(idx===0?imgs.length-1:idx-1); };
-  if(n) n.onclick = function(){ go((idx+1)%imgs.length); };
-  var gm = document.querySelector(".gallery-main");
-  if(gm){
-    var sx=0;
-    gm.addEventListener("touchstart",function(e){ sx=e.changedTouches[0].screenX; },{passive:true});
-    gm.addEventListener("touchend",function(e){
-      var d=sx-e.changedTouches[0].screenX;
-      if(Math.abs(d)>50) go(d>0?(idx+1)%imgs.length:idx===0?imgs.length-1:idx-1);
-    },{passive:true});
-  }
-})();
-`}} />
+            <div dangerouslySetInnerHTML={{ __html: `
+<script>
+var __imgs=["/images/dYdvdqs6VrAy.png","/images/armario-2.png","/images/armario-3.png","/images/armario-4.png","/images/armario-5.png","/images/armario-6.png"];
+var __idx=0;
+function __go(i){__idx=i;var m=document.getElementById("main-product-image");if(m)m.src=__imgs[i];var t=document.querySelectorAll("#thumbnails .thumbnail");for(var j=0;j<t.length;j++){t[j].className=t[j].className.replace(" active","");}if(t[i])t[i].className+=" active";}
+function __prev(){__go(__idx===0?__imgs.length-1:__idx-1);}
+function __next(){__go((__idx+1)%__imgs.length);}
+</script>
+<p class="breadcrumb gallery-breadcrumb">Casa / Organiza\u00e7\u00e3o / Arm\u00e1rios</p>
+<div class="gallery-main">
+<img id="main-product-image" src="/images/dYdvdqs6VrAy.png" alt="Arm\u00e1rios FlexHome grafite e branco" />
+<span class="badge badge-accent">Frete gr\u00e1tis</span>
+<button class="gallery-arrow gallery-prev" id="gallery-prev" onclick="__prev()" aria-label="Imagem anterior"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+<button class="gallery-arrow gallery-next" id="gallery-next" onclick="__next()" aria-label="Pr\u00f3xima imagem"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+</div>
+<div class="thumbnails" id="thumbnails" aria-label="Fotos do produto">
+<button type="button" class="thumbnail active" onclick="__go(0)" aria-label="Arm\u00e1rios FlexHome grafite e branco"><img src="/images/dYdvdqs6VrAy.png" alt="" /></button>
+<button type="button" class="thumbnail" onclick="__go(1)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 2"><img src="/images/armario-2.png" alt="" /></button>
+<button type="button" class="thumbnail" onclick="__go(2)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 3"><img src="/images/armario-3.png" alt="" /></button>
+<button type="button" class="thumbnail" onclick="__go(3)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 4"><img src="/images/armario-4.png" alt="" /></button>
+<button type="button" class="thumbnail" onclick="__go(4)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 5"><img src="/images/armario-5.png" alt="" /></button>
+<button type="button" class="thumbnail" onclick="__go(5)" aria-label="Arm\u00e1rio FlexHome \u2014 foto 6"><img src="/images/armario-6.png" alt="" /></button>
+</div>
+` }} suppressHydrationWarning />
 
             <div className="product-info">
               <h1>FlexHome - Armário Multifuncional</h1>
