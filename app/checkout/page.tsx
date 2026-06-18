@@ -39,6 +39,7 @@ function CheckoutContent() {
   const [cityTouched, setCityTouched] = useState(false);
   const [stateTouched, setStateTouched] = useState(false);
   const [fetchingCep, setFetchingCep] = useState(false);
+  const [cepFetched, setCepFetched] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "card">("pix");
   const [cardNumber, setCardNumber] = useState("");
@@ -152,6 +153,7 @@ function CheckoutContent() {
     var clean = cepVal.replace(/\D/g, "");
     if (clean.length !== 8) return;
     setFetchingCep(true);
+    setCepFetched(false);
     try {
       var res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
       var data = await res.json();
@@ -160,9 +162,14 @@ function CheckoutContent() {
         setNeighborhood(data.bairro || "");
         setCity(data.localidade || "");
         setState(data.uf || "");
+      } else {
+        setStreet(""); setNeighborhood(""); setCity(""); setState("");
       }
-    } catch {}
+    } catch {
+      setStreet(""); setNeighborhood(""); setCity(""); setState("");
+    }
     setFetchingCep(false);
+    setCepFetched(true);
   }
 
   var nameError = nameTouched && name.trim().split(" ").length < 2 ? "Informe nome e sobrenome" : "";
@@ -396,58 +403,62 @@ function CheckoutContent() {
                       <input id="cep" type="text" value={cep} onChange={(e) => { var v = formatCep(e.target.value); setCep(v); setCepTouched(true); if (v.replace(/\D/g, "").length === 8) fetchAddress(v); }} placeholder="00000-000" maxLength={9} className={cepError ? "invalid" : ""} style={cep && !cepError ? { borderColor: "var(--success)" } : undefined} />
                       {fetchingCep && <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "var(--muted)" }}>Buscando...</span>}
                     </div>
-                    <div className={`field-hint ${cepError ? "error" : cep && !cepError ? "success" : ""}`} style={{ visibility: cepTouched ? "visible" : "hidden" }}>
-                      {cepError || (cep && !cepError ? "✓ CEP válido" : ".")}
+                    <div className={`field-hint ${cepError ? "error" : cep && !cepError && cepFetched ? "success" : ""}`} style={{ visibility: cepTouched ? "visible" : "hidden" }}>
+                      {cepError ? "CEP inválido — preencha o endereço manualmente" : (cep && !cepError && cepFetched ? "✓ CEP encontrado" : ".")}
                     </div>
                   </div>
                 </div>
 
-                <div className="form-grid address-line" style={{ marginTop: 14 }}>
-                  <div className="field">
-                    <label htmlFor="street">Rua</label>
-                    <input id="street" type="text" value={street} onChange={(e) => { setStreet(e.target.value); setStreetTouched(true); }} placeholder="Rua, Avenida..." className={streetError ? "invalid" : ""} style={street && !streetError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${streetError ? "error" : ""}`} style={{ visibility: streetTouched ? "visible" : "hidden" }}>{streetError || "."}</div>
-                  </div>
-                  <div className="field">
-                    <label htmlFor="number">Número</label>
-                    <input id="number" type="text" value={number} onChange={(e) => { setNumber(e.target.value); setNumberTouched(true); }} placeholder="Nº" className={numberError ? "invalid" : ""} style={number && !numberError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${numberError ? "error" : ""}`} style={{ visibility: numberTouched ? "visible" : "hidden" }}>{numberError || "."}</div>
-                  </div>
-                </div>
+                {cepFetched && (
+                  <>
+                    <div className="form-grid address-line" style={{ marginTop: 14 }}>
+                      <div className="field">
+                        <label htmlFor="street">Rua</label>
+                        <input id="street" type="text" value={street} onChange={(e) => { setStreet(e.target.value); setStreetTouched(true); }} placeholder="Rua, Avenida..." className={streetError ? "invalid" : ""} style={street && !streetError ? { borderColor: "var(--success)" } : undefined} />
+                        <div className={`field-hint ${streetError ? "error" : ""}`} style={{ visibility: streetTouched ? "visible" : "hidden" }}>{streetError || "."}</div>
+                      </div>
+                      <div className="field">
+                        <label htmlFor="number">Número</label>
+                        <input id="number" type="text" value={number} onChange={(e) => { setNumber(e.target.value); setNumberTouched(true); }} placeholder="Nº" className={numberError ? "invalid" : ""} style={number && !numberError ? { borderColor: "var(--success)" } : undefined} />
+                        <div className={`field-hint ${numberError ? "error" : ""}`} style={{ visibility: numberTouched ? "visible" : "hidden" }}>{numberError || "."}</div>
+                      </div>
+                    </div>
 
-                <div className="form-grid address-line" style={{ marginTop: 14 }}>
-                  <div className="field">
-                    <label htmlFor="complement" style={{ opacity: 0.7 }}>Complemento <span style={{ fontWeight: 400 }}>(opcional)</span></label>
-                    <input id="complement" type="text" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." />
-                  </div>
-                  <div className="field">
-                    <label htmlFor="neighborhood">Bairro</label>
-                    <input id="neighborhood" type="text" value={neighborhood} onChange={(e) => { setNeighborhood(e.target.value); setNeighborhoodTouched(true); }} placeholder="Bairro" className={neighborhoodError ? "invalid" : ""} style={neighborhood && !neighborhoodError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${neighborhoodError ? "error" : ""}`} style={{ visibility: neighborhoodTouched ? "visible" : "hidden" }}>{neighborhoodError || "."}</div>
-                  </div>
-                </div>
+                    <div className="form-grid address-line" style={{ marginTop: 14 }}>
+                      <div className="field">
+                        <label htmlFor="complement" style={{ opacity: 0.7 }}>Complemento <span style={{ fontWeight: 400 }}>(opcional)</span></label>
+                        <input id="complement" type="text" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="neighborhood">Bairro</label>
+                        <input id="neighborhood" type="text" value={neighborhood} onChange={(e) => { setNeighborhood(e.target.value); setNeighborhoodTouched(true); }} placeholder="Bairro" className={neighborhoodError ? "invalid" : ""} style={neighborhood && !neighborhoodError ? { borderColor: "var(--success)" } : undefined} />
+                        <div className={`field-hint ${neighborhoodError ? "error" : ""}`} style={{ visibility: neighborhoodTouched ? "visible" : "hidden" }}>{neighborhoodError || "."}</div>
+                      </div>
+                    </div>
 
-                <div className="form-grid address-line" style={{ marginTop: 14 }}>
-                  <div className="field">
-                    <label htmlFor="city">Cidade</label>
-                    <input id="city" type="text" value={city} onChange={(e) => { setCity(e.target.value); setCityTouched(true); }} placeholder="Cidade" className={cityError ? "invalid" : ""} style={city && !cityError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${cityError ? "error" : ""}`} style={{ visibility: cityTouched ? "visible" : "hidden" }}>{cityError || "."}</div>
-                  </div>
-                  <div className="field">
-                    <label htmlFor="state">Estado</label>
-                    <input id="state" type="text" value={state} onChange={(e) => { setState(e.target.value.toUpperCase()); setStateTouched(true); }} placeholder="UF" maxLength={2} className={stateError ? "invalid" : ""} style={state && !stateError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${stateError ? "error" : ""}`} style={{ visibility: stateTouched ? "visible" : "hidden" }}>{stateError || "."}</div>
-                  </div>
-                </div>
+                    <div className="form-grid address-line" style={{ marginTop: 14 }}>
+                      <div className="field">
+                        <label htmlFor="city">Cidade</label>
+                        <input id="city" type="text" value={city} onChange={(e) => { setCity(e.target.value); setCityTouched(true); }} placeholder="Cidade" className={cityError ? "invalid" : ""} style={city && !cityError ? { borderColor: "var(--success)" } : undefined} />
+                        <div className={`field-hint ${cityError ? "error" : ""}`} style={{ visibility: cityTouched ? "visible" : "hidden" }}>{cityError || "."}</div>
+                      </div>
+                      <div className="field">
+                        <label htmlFor="state">Estado</label>
+                        <input id="state" type="text" value={state} onChange={(e) => { setState(e.target.value.toUpperCase()); setStateTouched(true); }} placeholder="UF" maxLength={2} className={stateError ? "invalid" : ""} style={state && !stateError ? { borderColor: "var(--success)" } : undefined} />
+                        <div className={`field-hint ${stateError ? "error" : ""}`} style={{ visibility: stateTouched ? "visible" : "hidden" }}>{stateError || "."}</div>
+                      </div>
+                    </div>
 
-                <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-                  <button className="button button-dark" style={{ flex: 1 }} onClick={() => setStep(1)}>
-                    ← Voltar
-                  </button>
-                  <button className="button button-primary button-large" style={{ flex: 2 }} onClick={() => { setStep(3); if (!cepTouched) setCepTouched(true); if (!streetTouched) setStreetTouched(true); if (!numberTouched) setNumberTouched(true); if (!neighborhoodTouched) setNeighborhoodTouched(true); if (!cityTouched) setCityTouched(true); if (!stateTouched) setStateTouched(true); }} disabled={!step2Valid}>
-                    Ir para Pagamento <span style={{ marginLeft: 6 }}>→</span>
-                  </button>
-                </div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+                      <button className="button button-dark" style={{ flex: 1 }} onClick={() => setStep(1)}>
+                        ← Voltar
+                      </button>
+                      <button className="button button-primary button-large" style={{ flex: 2 }} onClick={() => { setStep(3); if (!streetTouched) setStreetTouched(true); if (!numberTouched) setNumberTouched(true); if (!neighborhoodTouched) setNeighborhoodTouched(true); if (!cityTouched) setCityTouched(true); if (!stateTouched) setStateTouched(true); }} disabled={!step2Valid}>
+                        Ir para Pagamento <span style={{ marginLeft: 6 }}>→</span>
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
