@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     });
 
     /* ── Utmify paid ────────────────────────────────────────── */
-    void sendUtmifyPaid(txId, total ?? 0, session, new Date().toISOString());
+    void sendUtmifyPaid(txId, total ?? 0, session as Record<string, unknown> | null, new Date().toISOString());
 
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {
@@ -75,15 +75,16 @@ async function sendUtmifyPaid(
   session: Record<string, unknown> | null,
   now: string,
 ) {
+  const s = session ?? {};
   if (!session) return;
 
-  const rawPII = session.raw_pii as Record<string, string> | undefined;
+  const rawPII = s.raw_pii as Record<string, string> | undefined;
   if (!rawPII?.name) {
     console.warn("[webhook-podpay/utmify] raw_pii ausente");
     return;
   }
 
-  const createdAt = (session.created_at as string) || now;
+  const createdAt = (s.created_at as string) || now;
   const amountCents = totalCents || 0;
 
   const order: UtmifyOrder = {
@@ -104,11 +105,11 @@ async function sendUtmifyPaid(
     }],
     trackingParameters: {
       src: null, sck: null,
-      utm_source: (session.utm_source as string) || null,
-      utm_campaign: (session.utm_campaign as string) || null,
-      utm_medium: (session.utm_medium as string) || null,
-      utm_content: (session.utm_content as string) || null,
-      utm_term: (session.utm_term as string) || null,
+      utm_source: (s.utm_source as string) || null,
+      utm_campaign: (s.utm_campaign as string) || null,
+      utm_medium: (s.utm_medium as string) || null,
+      utm_content: (s.utm_content as string) || null,
+      utm_term: (s.utm_term as string) || null,
     },
     commission: {
       totalPriceInCents: amountCents, gatewayFeeInCents: 0, userCommissionInCents: amountCents,
