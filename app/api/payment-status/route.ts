@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const apiKey = process.env.PODPAY_API_KEY;
+    const apiKey = process.env.HUBPAG_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "API key não configurada" }, { status: 500 });
     }
@@ -12,25 +12,33 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Parâmetro id é obrigatório" }, { status: 400 });
     }
 
-    const response = await fetch(`https://api.podpay.app/v1/transactions/${id}`, {
-      headers: { "x-api-key": apiKey },
+    const response = await fetch(`https://app.hubpague.io/api/transactions/${id}`, {
+      headers: { "Authorization": `Bearer ${apiKey}` },
     });
 
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      return NextResponse.json(
-        { error: data.error?.message || "Erro ao consultar transação" },
-        { status: response.status }
-      );
+    const rawText = await response.text();
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(rawText) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json({ error: "Resposta inválida do gateway" }, { status: 502 });
     }
 
+    if (!response.ok) {
+      const errMsg = String(body?.message || body?.error || "Erro ao consultar transação");
+      return NextResponse.json({ error: errMsg }, { status: response.status });
+    }
+
+    // HubPag envolve a resposta em .data
+    const tx = (body.data as Record<string, unknown>) ?? body;
+
     return NextResponse.json({
-      id: data.data.id,
-      status: data.data.status,
+      id:     tx.id     as string,
+      status: tx.status as string,
     });
-  } catch (error: any) {
-    console.error("payment-status error:", error);
-    return NextResponse.json({ error: error.message || "Erro interno" }, { status: 500 });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Erro interno";
+    console.error("payment-status error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

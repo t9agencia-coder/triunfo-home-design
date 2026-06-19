@@ -19,15 +19,6 @@ export default function RootLayout({
         <meta charSet="UTF-8" />
         <link rel="stylesheet" href="/css/BfDe2pjOPHWZ.css" />
 
-        {/* Utmify */}
-        <script dangerouslySetInnerHTML={{ __html: `
-          window.pixelId = "6a30ffc14786e07a2af315fd";
-          var a = document.createElement("script");
-          a.setAttribute("async",""); a.setAttribute("defer","");
-          a.setAttribute("src","https://cdn.utmify.com.br/scripts/pixel/pixel.js");
-          document.head.appendChild(a);
-        `}} />
-
         {/* Meta Pixel — stub + init sem PageView automático (metatrack.js dispara com eventID) */}
         {META_PIXEL_ID && (
           <script dangerouslySetInnerHTML={{ __html: `

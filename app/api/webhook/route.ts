@@ -6,41 +6,38 @@ import { buildUserData, buildPurchaseEvent } from "@/lib/meta/events";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as {
-      success?: boolean;
-      data?: {
-        id?:            string;
-        status?:        string;
-        amount?:        number;
-        paymentMethod?: string;
-      };
-    };
+    const body = await req.json() as Record<string, unknown>;
 
     console.log("[webhook] payload recebido:", JSON.stringify(body));
 
-    const tx = body?.data;
-    if (!tx?.id || !tx?.status) {
+    // HubPag pode enviar flat ou envolvido em .data
+    const tx = (body?.data as Record<string, unknown>) ?? body;
+    const txId   = tx?.id     as string | undefined;
+    const status = tx?.status as string | undefined;
+    const total  = tx?.total  as number | undefined; // centavos
+
+    if (!txId || !status) {
       return NextResponse.json({ ok: true });
     }
 
     /* Processar somente pagamentos confirmados */
-    if (tx.status !== "paid") {
-      console.log(`[webhook] status=${tx.status} — sem ação`);
+    if (status !== "paid") {
+      console.log(`[webhook] status=${status} — sem ação`);
       return NextResponse.json({ ok: true });
     }
 
-    console.log(`[webhook] pagamento confirmado: txId=${tx.id} valor=${tx.amount}`);
+    console.log(`[webhook] pagamento confirmado: txId=${txId} total=${total}`);
 
     /* ── Recuperar sessão de rastreamento ───────────────────── */
-    const session = await getSessionByTransaction(tx.id);
+    const session = await getSessionByTransaction(txId);
 
     if (!session) {
-      console.warn(`[webhook] sessão não encontrada para txId=${tx.id}`);
+      console.warn(`[webhook] sessão não encontrada para txId=${txId}`);
     }
 
     /* ── Montar evento Purchase ─────────────────────────────── */
-    const eventId = `purchase_${tx.id}`;
-    const value   = tx.amount ? tx.amount / 100 : 0; // PodPay envia em centavos
+    const eventId = `purchase_${txId}`;
+    const value   = total ? total / 100 : 0; // HubPag envia em centavos
 
     const userData = buildUserData({
       session: session ?? {},
@@ -51,7 +48,7 @@ export async function POST(req: NextRequest) {
       eventId,
       userData,
       value,
-      transactionId: tx.id,
+      transactionId: txId,
     });
 
     /* ── Enviar Purchase via CAPI ───────────────────────────── */
@@ -63,7 +60,7 @@ export async function POST(req: NextRequest) {
     await logEvent({
       eventId,
       eventName:      "Purchase",
-      transactionId:  tx.id,
+      transactionId:  txId,
       payloadSent:    purchaseEvent as unknown as Record<string, unknown>,
       responseBody:   result.body,
       responseStatus: result.status,

@@ -2,23 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { linkTransactionToSession, saveSession } from "@/lib/redis";
 import { hashPII, splitName } from "@/lib/hash";
 
-interface PodPayTransaction {
-  id:             string;
-  status:         string;
-  pixQrCode:      string;
-  pixQrCodeImage: string;
-  [key: string]:  unknown;
+function maskCpf(cpf: string): string {
+  const d = cpf.replace(/\D/g, "");
+  return d.length === 11 ? `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9,11)}` : cpf;
 }
 
-interface PodPayResponse {
-  success?: boolean;
-  data?:    PodPayTransaction;
-  error?:   unknown;
+interface HubPagTransaction {
+  id:     string;
+  total:  number;
+  status: string;
+  pix?: {
+    qrcode:    string;
+    copypaste: string;
+    end2EndId: string | null;
+  };
+  [key: string]: unknown;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.PODPAY_API_KEY;
+    const apiKey = process.env.HUBPAG_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "API key não configurada" }, { status: 500 });
     }
@@ -30,48 +33,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Campos obrigatórios: name, cpf, amount" }, { status: 400 });
     }
 
-    const host     = req.headers.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
+    const amountCents = Math.round(amount * 100);
 
-    const payload = {
-      paymentMethod: "pix",
-      postbackUrl: `${protocol}://${host}/api/webhook`,
+    const payload: Record<string, unknown> = {
+      amount: amountCents,
+      method: "pix",
       customer: {
-        document: { type: "cpf", number: cpf.replace(/\D/g, "") },
         name,
         email: email || "",
-        phone: phone ? phone.replace(/\D/g, "") : "",
-        address: address ? {
-          zip:          address.zip,
-          street:       address.street,
-          number:       address.number,
-          complement:   address.complement || "",
-          neighborhood: address.neighborhood,
-          city:         address.city,
-          state:        address.state,
-        } : undefined,
+        phone: phone || "",
+        document: {
+          type:  "CPF",
+          value: maskCpf(cpf),
+        },
       },
-      amount: Math.round(amount * 100),
-      items: [{
-        title:     title || "FlexHome - Armário Multifuncional [PAGUE 1 LEVE 2]",
-        unitPrice: Math.round(amount * 100),
-        quantity:  quantity || 1,
-        tangible:  true,
+      products: [{
+        name:     title || "FlexHome - Armário Multifuncional",
+        price:    amountCents,
+        quantity: String(quantity || 1),
+        type:     "physical",
       }],
     };
 
-    const response = await fetch("https://api.podpay.app/v1/transactions", {
+    if (address) {
+      payload.delivery = {
+        street:       address.street       || "",
+        number:       address.number       || "",
+        complement:   address.complement   || "",
+        neighborhood: address.neighborhood || "",
+        city:         address.city         || "",
+        state:        address.state        || "",
+        zipcode:      address.zip          || "",
+      };
+    }
+
+    const response = await fetch("https://app.hubpague.io/api/payments", {
       method:  "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": apiKey },
-      body:    JSON.stringify(payload),
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
     });
 
     const rawText = await response.text();
-    console.log(`[create-pix] PodPay status=${response.status} body=${rawText.slice(0, 800)}`);
+    console.log(`[create-pix] HubPag status=${response.status} body=${rawText.slice(0, 800)}`);
 
-    let data: PodPayResponse;
+    let data: HubPagTransaction;
     try {
-      data = JSON.parse(rawText) as PodPayResponse;
+      data = JSON.parse(rawText) as HubPagTransaction;
     } catch {
       return NextResponse.json(
         { error: `Gateway retornou resposta inválida (HTTP ${response.status})` },
@@ -79,25 +89,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!response.ok || !data.success) {
-      const errData = data.error;
-      let errMsg = "Erro ao processar pagamento";
-      if (typeof errData === "string") errMsg = errData;
-      else if (errData && typeof errData === "object") {
-        const e = errData as Record<string, string>;
-        errMsg = e.message || e.code || JSON.stringify(errData);
-      }
-      console.error("[create-pix] PodPay rejeitou:", errMsg);
-      return NextResponse.json({ error: errMsg }, { status: response.ok ? 422 : response.status });
+    if (!response.ok) {
+      const errData = data as unknown as Record<string, unknown>;
+      const errMsg = String(errData?.message || errData?.error || "Erro ao processar pagamento");
+      console.error("[create-pix] HubPag rejeitou:", errMsg);
+      return NextResponse.json({ error: errMsg }, { status: response.status });
     }
 
-    const tx = data.data;
-    if (!tx?.id) {
+    if (!data?.id) {
       return NextResponse.json({ error: "Resposta inesperada do gateway" }, { status: 502 });
     }
 
+    const copypaste = data.pix?.copypaste || "";
+    // Se HubPag não retornar imagem do QR, gera via serviço público
+    const qrCodeImage =
+      (data.pix?.qrcode && data.pix.qrcode.trim() !== "")
+        ? data.pix.qrcode
+        : copypaste
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(copypaste)}`
+          : "";
+
     /* Associar transação à sessão de rastreamento (non-blocking) */
-    if (sessionId && tx.id) {
+    if (sessionId && data.id) {
       const { firstName, lastName } = splitName(name ?? "");
       const hashedPII = hashPII({
         email:     email,
@@ -110,16 +123,16 @@ export async function POST(req: NextRequest) {
       });
 
       void Promise.allSettled([
-        linkTransactionToSession(tx.id, sessionId),
+        linkTransactionToSession(data.id, sessionId),
         saveSession(sessionId, { pii: hashedPII }),
       ]);
     }
 
     return NextResponse.json({
-      id:             tx.id,
-      status:         tx.status,
-      pixQrCode:      tx.pixQrCode,
-      pixQrCodeImage: tx.pixQrCodeImage,
+      id:             data.id,
+      status:         data.status,
+      pixQrCode:      copypaste,
+      pixQrCodeImage: qrCodeImage,
       amount,
     });
   } catch (error: unknown) {

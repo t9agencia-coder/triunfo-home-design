@@ -375,8 +375,8 @@ function CheckoutContent() {
           email: email.trim(),
           phone: phone.replace(/\D/g, ""),
           cpf: cpf.replace(/\D/g, ""),
-          amount: 1.00, /* TESTE: remover antes de ir para produção */
-          title: "Produto 1",
+          amount: totalAmount,
+          title: title,
           quantity: selectedQty,
           sessionId: getSessionId(),
           address: {
