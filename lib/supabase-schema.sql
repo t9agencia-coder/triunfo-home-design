@@ -37,7 +37,9 @@ CREATE TABLE IF NOT EXISTS tracking_sessions (
   updated_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS tracking_events (
+DROP TABLE IF EXISTS tracking_events CASCADE;
+
+CREATE TABLE tracking_events (
   id              BIGSERIAL PRIMARY KEY,
   event_id        TEXT UNIQUE NOT NULL,
   event_name      TEXT NOT NULL,
@@ -53,6 +55,6 @@ CREATE TABLE IF NOT EXISTS tracking_events (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_te_event_name     ON tracking_events (event_name);
-CREATE INDEX IF NOT EXISTS idx_te_transaction_id ON tracking_events (transaction_id);
-CREATE INDEX IF NOT EXISTS idx_te_session_id     ON tracking_events (session_id);
+CREATE INDEX idx_te_event_name     ON tracking_events (event_name);
+CREATE INDEX idx_te_transaction_id ON tracking_events (transaction_id);
+CREATE INDEX idx_te_session_id     ON tracking_events (session_id);
