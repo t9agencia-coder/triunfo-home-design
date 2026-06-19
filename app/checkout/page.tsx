@@ -32,7 +32,9 @@ const ESTADOS = [
 function CheckoutContent() {
   const searchParams = useSearchParams();
 
-  const variant = (searchParams.get("variant") || "2 Pretos").trim();
+  let _ssVariant = "";
+  try { _ssVariant = sessionStorage.getItem("thd_variant") || ""; } catch (_) {}
+  const variant = (_ssVariant || searchParams.get("variant") || "2 Pretos").trim();
   const colorName = (searchParams.get("colorName") || variant).trim();
   const price = Number(searchParams.get("price")) || 109.9;
   const compareAt = Number(searchParams.get("compareAt")) || 219.8;
@@ -367,6 +369,7 @@ function CheckoutContent() {
     );
 
     try {
+      const clientUtms = (typeof window !== "undefined" && (window as any).THD?.utms) || {};
       var response = await fetch("/api/create-pix", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -375,10 +378,11 @@ function CheckoutContent() {
           email: email.trim(),
           phone: phone.replace(/\D/g, ""),
           cpf: cpf.replace(/\D/g, ""),
-          amount: 10.00, /* TESTE */
+          amount: totalAmount,
           title: title,
           quantity: selectedQty,
           sessionId: getSessionId(),
+          utms: clientUtms,
           address: {
             zip: cep.replace(/\D/g, ""),
             street: street.trim(),

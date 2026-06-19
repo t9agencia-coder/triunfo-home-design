@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { linkTransactionToSession, saveSession, getSession } from "@/lib/redis";
+import { linkTransactionToSession, saveSession } from "@/lib/redis";
 import { hashPII, splitName } from "@/lib/hash";
 import { sendOrderToUtmify } from "@/lib/utmify";
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, email, phone, cpf, amount, title, quantity, address, sessionId } = body;
+    const { name, email, phone, cpf, amount, title, quantity, address, sessionId, utms } = body;
 
     if (!name || !cpf || !amount) {
       return NextResponse.json({ error: "Campos obrigatórios: name, cpf, amount" }, { status: 400 });
@@ -140,48 +140,46 @@ export async function POST(req: NextRequest) {
 
       /* Enviar waiting_payment para Utmify (non-blocking) */
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || undefined;
-      void (async () => {
-        const session = await getSession(sessionId);
-        await sendOrderToUtmify({
-          orderId:       data.id,
-          platform:      "TriunfoHomeDesign",
-          paymentMethod: "pix",
-          status:        "waiting_payment",
-          createdAt:     new Date().toISOString().replace("T", " ").slice(0, 19),
-          approvedDate:  null,
-          refundedAt:    null,
-          customer: {
-            name,
-            email:  email || "",
-            phone:  phone  || null,
-            document: cpf.replace(/\D/g, ""),
-            country: "BR",
-            ip,
-          },
-          products: [{
-            id:           "flexhome-armario-multifuncional",
-            name:         title || "FlexHome - Armário Multifuncional",
-            planId:       null,
-            planName:     null,
-            quantity:     Number(quantity || 1),
-            priceInCents: amountCents,
-          }],
-          trackingParameters: {
-            src:          null,
-            sck:          null,
-            utm_source:   session?.utm_source   || null,
-            utm_campaign: session?.utm_campaign || null,
-            utm_medium:   session?.utm_medium   || null,
-            utm_content:  session?.utm_content  || null,
-            utm_term:     session?.utm_term     || null,
-          },
-          commission: {
-            totalPriceInCents:    amountCents,
-            gatewayFeeInCents:    0,
-            userCommissionInCents: amountCents,
-          },
-        });
-      })();
+      const rawUtms = utms as Record<string, string> | undefined;
+      void sendOrderToUtmify({
+        orderId:       data.id,
+        platform:      "TriunfoHomeDesign",
+        paymentMethod: "pix",
+        status:        "waiting_payment",
+        createdAt:     new Date().toISOString().replace("T", " ").slice(0, 19),
+        approvedDate:  null,
+        refundedAt:    null,
+        customer: {
+          name,
+          email:  email || "",
+          phone:  phone  || null,
+          document: cpf.replace(/\D/g, ""),
+          country: "BR",
+          ip,
+        },
+        products: [{
+          id:           "flexhome-armario-multifuncional",
+          name:         title || "FlexHome - Armário Multifuncional",
+          planId:       null,
+          planName:     null,
+          quantity:     Number(quantity || 1),
+          priceInCents: amountCents,
+        }],
+        trackingParameters: {
+          src:          rawUtms?.src          || null,
+          sck:          rawUtms?.sck          || null,
+          utm_source:   rawUtms?.utm_source   || null,
+          utm_campaign: rawUtms?.utm_campaign || null,
+          utm_medium:   rawUtms?.utm_medium   || null,
+          utm_content:  rawUtms?.utm_content  || null,
+          utm_term:     rawUtms?.utm_term     || null,
+        },
+        commission: {
+          totalPriceInCents:    amountCents,
+          gatewayFeeInCents:    0,
+          userCommissionInCents: amountCents,
+        },
+      });
     }
 
     return NextResponse.json({

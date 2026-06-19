@@ -110,14 +110,7 @@ export default function Home() {
                     </svg>
                   </span>
                 </button>
-                <div className="offer-color-selector" id="offer-color-selector">
-                  <label htmlFor="variant-select">Escolha as cores:</label>
-                  <select id="variant-select">
-                    <option value="2 Pretos">2 Pretos</option>
-                    <option value="2 Brancos">2 Brancos</option>
-                    <option value="1 Preto e 1 Branco">1 Preto e 1 Branco</option>
-                  </select>
-                </div>
+                <div className="offer-color-selector" id="offer-color-selector" dangerouslySetInnerHTML={{ __html: `<label for="variant-select">Escolha as cores:</label><select id="variant-select" onchange="(function(v){try{sessionStorage.setItem('thd_variant',v)}catch(e){}; ['buy-now','sticky-buy'].forEach(function(id){var el=document.getElementById(id);if(el)el.href='/checkout?variant='+encodeURIComponent(v)+'&colorName='+encodeURIComponent(v)+'&price=109.90&compareAt=219.80&units=2';});})(this.value)"><option value="2 Pretos">2 Pretos</option><option value="2 Brancos">2 Brancos</option><option value="1 Preto e 1 Branco">1 Preto e 1 Branco</option></select>` }} />
               </fieldset>
 
               <div className="price-block">
@@ -648,7 +641,7 @@ window.__cepCalc=function(){var i=document.getElementById("cep-calc"),b=document
 </script>\
 ` }} />
       <script src="/js/AxVL7LwBujgu.js?v=4" defer></script>
-      <script src="/js/yFVPl407oWCP.js?v=4" defer></script>
+      <script src="/js/yFVPl407oWCP.js?v=5" defer></script>
 
       {/* ViewContent — dispara quando a página do produto carrega */}
       <script dangerouslySetInnerHTML={{ __html: `

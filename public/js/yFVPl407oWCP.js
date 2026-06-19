@@ -310,6 +310,7 @@
         selection.color.id   = map.colorId;
         selection.color.name = map.colorName;
       }
+      try { sessionStorage.setItem("thd_variant", v); } catch(e) {}
       var url = purchaseUrl(currentItem());
       var buyNowEl    = byId("buy-now");
       var stickyBuyEl = byId("sticky-buy");
