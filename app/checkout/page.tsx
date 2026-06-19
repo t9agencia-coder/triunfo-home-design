@@ -116,10 +116,10 @@ function CheckoutContent() {
     const min = 500;
     const max = 1000;
     const bp = Math.floor(Math.random() * (max - min + 1)) + min;
-    const percent = bp / 100;
-    try { sessionStorage.setItem("thd_pix_discount", String(percent)); } catch {}
-    console.log(`[desconto] gerado: ${percent.toFixed(2)}% para o checkout`);
-    return percent;
+    const decimal = bp / 10000;
+    try { sessionStorage.setItem("thd_pix_discount", String(decimal)); } catch {}
+    console.log(`[desconto] gerado: ${(decimal * 100).toFixed(2)}% para o checkout`);
+    return decimal;
   }
 
   function sendTrackEvent(eventName: string, extraData?: Record<string, unknown>, pii?: Record<string, string>) {
