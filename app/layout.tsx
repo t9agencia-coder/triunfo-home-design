@@ -31,6 +31,15 @@ export default function RootLayout({
           `}} />
         )}
 
+        {/* Utmify — rastreamento de UTMs e atribuição */}
+        <script
+          src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+          data-utmify-prevent-xcod-sck
+          data-utmify-prevent-subids
+          async
+          defer
+        ></script>
+
         {/* metatrack.js — sessão, UTMs, fbp/fbc, despacho de eventos */}
         <script src="/js/metatrack.js?v=1" defer></script>
 
