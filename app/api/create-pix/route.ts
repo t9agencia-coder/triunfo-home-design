@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { linkTransactionToSession, saveSession } from "@/lib/redis";
+import { linkTransactionToSession, saveSession, getSession } from "@/lib/redis";
 import { hashPII, splitName } from "@/lib/hash";
+import { sendOrderToUtmify } from "@/lib/utmify";
 
 function maskCpf(cpf: string): string {
   const d = cpf.replace(/\D/g, "");
@@ -109,7 +110,7 @@ export async function POST(req: NextRequest) {
           ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(copypaste)}`
           : "";
 
-    /* Associar transação à sessão de rastreamento (non-blocking) */
+    /* Associar transação à sessão de rastreamento */
     if (sessionId && data.id) {
       const { firstName, lastName } = splitName(name ?? "");
       const hashedPII = hashPII({
@@ -122,10 +123,65 @@ export async function POST(req: NextRequest) {
         zip:       address?.zip,
       });
 
-      void Promise.allSettled([
+      const rawPII: Record<string, string> = {
+        name,
+        email:     email || "",
+        phone:     phone || "",
+        document:  cpf.replace(/\D/g, ""),
+      };
+
+      await Promise.allSettled([
         linkTransactionToSession(data.id, sessionId),
-        saveSession(sessionId, { pii: hashedPII }),
+        saveSession(sessionId, {
+          pii:     hashedPII,
+          raw_pii: rawPII,
+        }),
       ]);
+
+      /* Enviar waiting_payment para Utmify (non-blocking) */
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || undefined;
+      void (async () => {
+        const session = await getSession(sessionId);
+        await sendOrderToUtmify({
+          orderId:       data.id,
+          platform:      "TriunfoHomeDesign",
+          paymentMethod: "pix",
+          status:        "waiting_payment",
+          createdAt:     new Date().toISOString().replace("T", " ").slice(0, 19),
+          approvedDate:  null,
+          refundedAt:    null,
+          customer: {
+            name,
+            email:  email || "",
+            phone:  phone  || null,
+            document: cpf.replace(/\D/g, ""),
+            country: "BR",
+            ip,
+          },
+          products: [{
+            id:           "flexhome-armario-multifuncional",
+            name:         title || "FlexHome - Armário Multifuncional",
+            planId:       null,
+            planName:     null,
+            quantity:     Number(quantity || 1),
+            priceInCents: amountCents,
+          }],
+          trackingParameters: {
+            src:          null,
+            sck:          null,
+            utm_source:   session?.utm_source   || null,
+            utm_campaign: session?.utm_campaign || null,
+            utm_medium:   session?.utm_medium   || null,
+            utm_content:  session?.utm_content  || null,
+            utm_term:     session?.utm_term     || null,
+          },
+          commission: {
+            totalPriceInCents:    amountCents,
+            gatewayFeeInCents:    0,
+            userCommissionInCents: amountCents,
+          },
+        });
+      })();
     }
 
     return NextResponse.json({

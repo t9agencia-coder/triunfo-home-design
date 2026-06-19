@@ -100,6 +100,11 @@ export async function POST(req: NextRequest) {
     const customData: Record<string, unknown> = {
       ...(data ?? {}),
       currency: (data?.currency as string) || "BRL",
+      ...(sessionData.utm_source   && { utm_source:   sessionData.utm_source }),
+      ...(sessionData.utm_medium   && { utm_medium:   sessionData.utm_medium }),
+      ...(sessionData.utm_campaign && { utm_campaign: sessionData.utm_campaign }),
+      ...(sessionData.utm_content  && { utm_content:  sessionData.utm_content }),
+      ...(sessionData.utm_term     && { utm_term:     sessionData.utm_term }),
     };
 
     const capiEvent = buildEvent(eventName, {

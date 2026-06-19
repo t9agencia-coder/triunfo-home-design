@@ -42,8 +42,9 @@ export default function TenfPage() {
           nome: orderData.nome,
           email: orderData.email || "",
           cpf: orderData.cpf,
+          phone: orderData.phone || "",
           valor: 24.43,
-          descricao: "Taxa de Emissão de Nota Fiscal (TENF)",
+          descricao: "upsell 2",
         }),
       })
 

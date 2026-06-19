@@ -46,8 +46,9 @@ export default function FretePage() {
           nome: orderData.nome,
           email: orderData.email || "",
           cpf: orderData.cpf,
+          phone: orderData.phone || "",
           valor: 19.90,
-          descricao: "Correção de frete",
+          descricao: "upsell 3",
         }),
       })
 
@@ -69,7 +70,7 @@ export default function FretePage() {
 
       sessionStorage.setItem("pixPaymentData", JSON.stringify(pixPaymentData))
       sessionStorage.setItem("acquirerSlug", data.acquirerSlug || "blackpay")
-      sessionStorage.setItem("funnelNext", "/success")
+      sessionStorage.setItem("funnelNext", "https://www.google.com")
       sessionStorage.setItem("paymentContext", JSON.stringify({
         type: "upsell",
         title: "Correção de Frete",

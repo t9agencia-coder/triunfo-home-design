@@ -60,8 +60,9 @@ export default function ImportacaoPage() {
           nome: orderData.nome,
           email: orderData.email || "",
           cpf: orderData.cpf,
+          phone: orderData.phone || "",
           valor: 28.27,
-          descricao: "Taxa de desembaraço aduaneiro",
+          descricao: "upsell 1",
         }),
       })
 

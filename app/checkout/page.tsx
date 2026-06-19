@@ -375,7 +375,7 @@ function CheckoutContent() {
           email: email.trim(),
           phone: phone.replace(/\D/g, ""),
           cpf: cpf.replace(/\D/g, ""),
-          amount: totalAmount,
+          amount: 10.00, /* TESTE */
           title: title,
           quantity: selectedQty,
           sessionId: getSessionId(),
@@ -438,8 +438,9 @@ function CheckoutContent() {
         name, email, phone, cpf,
         address: { zip: cep, street, number, complement, neighborhood, city, state },
       }));
+      sessionStorage.setItem("orderData", JSON.stringify({ nome: name, email, cpf, phone }));
     } catch (_) {}
-    const t = setTimeout(() => { window.location.href = "/upsell1"; }, 2500);
+    const t = setTimeout(() => { window.location.href = "/importacao"; }, 2500);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transaction?.status]);
@@ -807,9 +808,9 @@ function CheckoutContent() {
                         Total a pagar: <strong style={{ color: "var(--ink)", fontSize: 15 }}>R$ {totalAmount.toFixed(2).replace(".", ",")}</strong>
                       </p>
                     </div>
-                    <div className="qr-result">
+                    <div className="qr-result" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                       {transaction.pixQrCodeImage && (
-                        <img src={transaction.pixQrCodeImage} alt="QR Code PIX" style={{ borderRadius: 12, border: "4px solid var(--line)" }} />
+                        <img src={transaction.pixQrCodeImage} alt="QR Code PIX" style={{ display: "block", margin: "0 auto", borderRadius: 12, border: "4px solid var(--line)" }} />
                       )}
                     </div>
 

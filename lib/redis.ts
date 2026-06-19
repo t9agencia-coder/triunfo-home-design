@@ -21,6 +21,7 @@ export interface SessionData {
   landing_page?: string;
   referer?:      string;
   pii?:          Record<string, string[]>;
+  raw_pii?:      Record<string, string>;
   created_at?:   string;
   updated_at?:   string;
 }
