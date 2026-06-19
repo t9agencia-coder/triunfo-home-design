@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { linkTransactionToSession, saveSession } from "@/lib/redis";
 import { hashPII, splitName } from "@/lib/hash";
 
+interface PodPayTransaction {
+  id:             string;
+  status:         string;
+  pixQrCode:      string;
+  pixQrCodeImage: string;
+  [key: string]:  unknown;
+}
+
+interface PodPayResponse {
+  success?: boolean;
+  data?:    PodPayTransaction;
+  error?:   unknown;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.PODPAY_API_KEY;
@@ -10,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, email, phone, cpf, amount, title, quantity, description, address, sessionId } = body;
+    const { name, email, phone, cpf, amount, title, quantity, address, sessionId } = body;
 
     if (!name || !cpf || !amount) {
       return NextResponse.json({ error: "Campos obrigatórios: name, cpf, amount" }, { status: 400 });
@@ -52,19 +66,37 @@ export async function POST(req: NextRequest) {
       body:    JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+    console.log(`[create-pix] PodPay status=${response.status} body=${rawText.slice(0, 800)}`);
 
-    if (!response.ok || !data.success) {
-      console.error("PodPay error:", data);
+    let data: PodPayResponse;
+    try {
+      data = JSON.parse(rawText) as PodPayResponse;
+    } catch {
       return NextResponse.json(
-        { error: data.error?.message || data.error?.code || "Erro ao processar pagamento" },
-        { status: response.status }
+        { error: `Gateway retornou resposta inválida (HTTP ${response.status})` },
+        { status: 502 }
       );
     }
 
-    const tx = data.data;
+    if (!response.ok || !data.success) {
+      const errData = data.error;
+      let errMsg = "Erro ao processar pagamento";
+      if (typeof errData === "string") errMsg = errData;
+      else if (errData && typeof errData === "object") {
+        const e = errData as Record<string, string>;
+        errMsg = e.message || e.code || JSON.stringify(errData);
+      }
+      console.error("[create-pix] PodPay rejeitou:", errMsg);
+      return NextResponse.json({ error: errMsg }, { status: response.ok ? 422 : response.status });
+    }
 
-    /* Associar transação à sessão de rastreamento */
+    const tx = data.data;
+    if (!tx?.id) {
+      return NextResponse.json({ error: "Resposta inesperada do gateway" }, { status: 502 });
+    }
+
+    /* Associar transação à sessão de rastreamento (non-blocking) */
     if (sessionId && tx.id) {
       const { firstName, lastName } = splitName(name ?? "");
       const hashedPII = hashPII({
@@ -77,7 +109,7 @@ export async function POST(req: NextRequest) {
         zip:       address?.zip,
       });
 
-      await Promise.allSettled([
+      void Promise.allSettled([
         linkTransactionToSession(tx.id, sessionId),
         saveSession(sessionId, { pii: hashedPII }),
       ]);
