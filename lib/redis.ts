@@ -24,6 +24,13 @@ export interface SessionData {
   raw_pii?:      Record<string, string>;
   created_at?:   string;
   updated_at?:   string;
+  /* Dados do desconto Pix */
+  discount_percent?:       number;
+  original_total_cents?:   number;
+  discount_value_cents?:   number;
+  final_total_cents?:      number;
+  transaction_id?:         string;
+  discount_generated_at?:  string;
 }
 
 export async function saveSession(sessionId: string, data: Partial<SessionData>): Promise<void> {

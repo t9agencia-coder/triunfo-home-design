@@ -24,7 +24,7 @@ interface HubPagTransaction {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, phone, cpf, amount, title, quantity, address, sessionId, utms } = body;
+    const { name, email, phone, cpf, amount, title, quantity, address, sessionId, utms, discountPercent, originalTotalCents, discountValueCents, finalTotalCents } = body;
 
     if (!name || !cpf || !amount) {
       return NextResponse.json({ error: "Campos obrigatórios: name, cpf, amount" }, { status: 400 });
@@ -110,8 +110,10 @@ export async function POST(req: NextRequest) {
     /* ── Tentativa 2: PodPay (fallback) ─────────────────────── */
     if (!txId) {
       gateway = "PodPay";
-      const postbackUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}/api/webhook-podpay`
+
+      const vercelUrl = process.env.VERCEL_URL || req.headers.get("host");
+      const postbackUrl = vercelUrl
+        ? `https://${vercelUrl}/api/webhook-podpay`
         : undefined;
 
       const podResult = await createPixTransaction({
@@ -168,8 +170,16 @@ export async function POST(req: NextRequest) {
         saveSession(sessionId, {
           pii: hashedPII,
           raw_pii: { name, email: email || "", phone: phone || "", document: cpf.replace(/\D/g, "") },
+          discount_percent: discountPercent ? Number(discountPercent) : undefined,
+          original_total_cents: originalTotalCents ? Number(originalTotalCents) : undefined,
+          discount_value_cents: discountValueCents ? Number(discountValueCents) : undefined,
+          final_total_cents: finalTotalCents ? Number(finalTotalCents) : amountCents,
+          transaction_id: txId,
+          discount_generated_at: new Date().toISOString(),
         }),
       ]);
+
+      console.log(`[desconto] pedido ${txId}: ${discountPercent}% | original=${originalTotalCents} | desc=${discountValueCents} | final=${finalTotalCents}`);
 
       /* Enviar waiting_payment para Utmify */
       void sendOrderToUtmify({

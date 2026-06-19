@@ -26,7 +26,7 @@ async function getEvents() {
     .from("tracking_events")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(200);
   const events = (data as EventRow[]) || [];
   const total = events.length;
   const byName: Record<string, number> = {};

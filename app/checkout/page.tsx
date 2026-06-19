@@ -108,6 +108,20 @@ function CheckoutContent() {
     return sessionIdRef.current;
   }
 
+  function getPixDiscount() {
+    try {
+      const stored = sessionStorage.getItem("thd_pix_discount");
+      if (stored) return parseFloat(stored);
+    } catch {}
+    const min = 500;
+    const max = 1000;
+    const bp = Math.floor(Math.random() * (max - min + 1)) + min;
+    const percent = bp / 100;
+    try { sessionStorage.setItem("thd_pix_discount", String(percent)); } catch {}
+    console.log(`[desconto] gerado: ${percent.toFixed(2)}% para o checkout`);
+    return percent;
+  }
+
   function sendTrackEvent(eventName: string, extraData?: Record<string, unknown>, pii?: Record<string, string>) {
     const sid = getSessionId();
     const eventId = eventName + "_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
@@ -383,6 +397,10 @@ function CheckoutContent() {
           quantity: selectedQty,
           sessionId: getSessionId(),
           utms: clientUtms,
+          discountPercent: pixDiscountPercent,
+          originalTotalCents: totalOrigCents,
+          discountValueCents: discountCents,
+          finalTotalCents: totalAmountCents,
           address: {
             zip: cep.replace(/\D/g, ""),
             street: street.trim(),
@@ -461,10 +479,13 @@ function CheckoutContent() {
 
   var paid = transaction?.status === "paid";
 
-  var pixDiscount = paymentMethod === "pix" ? 0.07 : 0;
-  var unitPrice = kitPrice * (1 - pixDiscount);
-  var totalAmount = unitPrice * selectedQty;
-  var discountAmount = kitPrice * selectedQty * pixDiscount;
+  var pixDiscountDecimal = paymentMethod === "pix" ? getPixDiscount() : 0;
+  var pixDiscountPercent = pixDiscountDecimal * 100;
+  var totalOrigCents = Math.round(kitPrice * selectedQty * 100);
+  var discountCents = Math.round(totalOrigCents * pixDiscountDecimal);
+  var totalAmountCents = totalOrigCents - discountCents;
+  var totalAmount = totalAmountCents / 100;
+  var discountAmount = discountCents / 100;
 
   var steps = [
     { n: 1, label: "Cliente" },
@@ -483,7 +504,7 @@ function CheckoutContent() {
 
       <div className="timer-bar" style={{ textAlign: "center", padding: "10px 16px", lineHeight: 1.5 }}>
         <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.01em" }}>
-          🎉 Sua compra ficou ainda melhor: Você ganhou <span style={{ background: "rgba(255,255,255,0.2)", padding: "1px 8px", borderRadius: 5 }}>7% de Desconto!</span>
+          🎉 Sua compra ficou ainda melhor: Você ganhou <span style={{ background: "rgba(255,255,255,0.2)", padding: "1px 8px", borderRadius: 5 }}>{pixDiscountPercent.toFixed(2).replace(".", ",")}% de Desconto!</span>
         </div>
         <div style={{ fontSize: 12, fontWeight: 400, marginTop: 3, opacity: 0.9 }}>
           Escolha o Pix como forma de pagamento hoje e o desconto será aplicado automaticamente.
@@ -760,7 +781,7 @@ function CheckoutContent() {
                     <div className="payment-tabs">
                       <button type="button" className={`payment-tab ${paymentMethod === "pix" ? "active" : ""}`} onClick={() => setPaymentMethod("pix")}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-                        PIX <span style={{ fontSize: 11, marginLeft: 4, opacity: 0.8, fontWeight: 400 }}>—7% off</span>
+                        PIX <span style={{ fontSize: 11, marginLeft: 4, opacity: 0.8, fontWeight: 400 }}>—{pixDiscountPercent.toFixed(2).replace(".", ",")}% off</span>
                       </button>
                       <button type="button" className={`payment-tab ${paymentMethod === "card" ? "active" : ""}`} onClick={() => setPaymentMethod("card")}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
@@ -997,19 +1018,19 @@ function CheckoutContent() {
                 <strong style={{ fontSize: 16, color: "var(--ink)" }}>
                   R$ {totalAmount.toFixed(2).replace(".", ",")}
                 </strong>
-                {pixDiscount > 0 && (
+                {pixDiscountDecimal > 0 && (
                   <s style={{ fontSize: 12, color: "var(--muted)" }}>
                     R$ {(kitPrice * selectedQty).toFixed(2).replace(".", ",")}
                   </s>
                 )}
-                {pixDiscount === 0 && (
+                {pixDiscountDecimal === 0 && (
                   <s style={{ fontSize: 12, color: "var(--muted)" }}>
                     R$ {(kitCompare * selectedQty).toFixed(2).replace(".", ",")}
                   </s>
                 )}
-                {pixDiscount > 0 && (
+                {pixDiscountDecimal > 0 && (
                   <span style={{ fontSize: 11, fontWeight: 900, background: "#22c55e", color: "#fff", borderRadius: 4, padding: "1px 5px" }}>
-                    PIX −7%
+                    PIX −{pixDiscountPercent.toFixed(2).replace(".", ",")}%
                   </span>
                 )}
               </div>
@@ -1035,9 +1056,9 @@ function CheckoutContent() {
                   <span style={{ color: "var(--muted)" }}>Subtotal ({selectedQty} kit{selectedQty > 1 ? "s" : ""})</span>
                   <strong>R$ {(kitPrice * selectedQty).toFixed(2).replace(".", ",")}</strong>
                 </div>
-                {pixDiscount > 0 && (
+                {pixDiscountDecimal > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "9px 14px", borderBottom: "1px solid var(--line)", fontSize: 13 }}>
-                    <span style={{ color: "#22c55e", fontWeight: 700 }}>Desconto PIX (7%)</span>
+                    <span style={{ color: "#22c55e", fontWeight: 700 }}>Desconto PIX ({pixDiscountPercent.toFixed(2).replace(".", ",")}%)</span>
                     <strong style={{ color: "#22c55e" }}>− R$ {discountAmount.toFixed(2).replace(".", ",")}</strong>
                   </div>
                 )}
@@ -1054,7 +1075,7 @@ function CheckoutContent() {
               {/* Economia */}
               <div style={{ marginTop: 10, padding: "8px 14px", background: "#f0faf5", border: "1px solid #c3e6d4", borderRadius: 10, fontSize: 12, color: "var(--success)", fontWeight: 700, textAlign: "center" }}>
                 💰 Você economiza R$ {(kitCompare * selectedQty - totalAmount).toFixed(2).replace(".", ",")} nesta oferta
-                {pixDiscount > 0 && <span style={{ fontWeight: 400 }}> (inclui 7% PIX)</span>}
+                {pixDiscountDecimal > 0 && <span style={{ fontWeight: 400 }}> (inclui {pixDiscountPercent.toFixed(2).replace(".", ",")}% PIX)</span>}
               </div>
 
               {/* Selos de confiança */}

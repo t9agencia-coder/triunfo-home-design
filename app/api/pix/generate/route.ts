@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPixTransaction } from "@/lib/podpay";
+import { linkTransactionToSession, getSession } from "@/lib/redis";
+import { sendOrderToUtmify, UtmifyOrder } from "@/lib/utmify";
 
 function maskCpf(cpf: string): string {
   const d = cpf.replace(/\D/g, "");
@@ -29,6 +31,7 @@ export async function POST(req: NextRequest) {
 
     const amountCents = Math.round(Number(valor) * 100);
     const productName = descricao || "Produto";
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || undefined;
 
     /* ── Tentativa 1: HubPag ────────────────────────────────── */
     let txId: string | null = null;
@@ -94,8 +97,10 @@ export async function POST(req: NextRequest) {
     /* ── Tentativa 2: PodPay (fallback) ─────────────────────── */
     if (!txId) {
       gateway = "PodPay";
-      const postbackUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}/api/webhook-podpay`
+
+      const vercelUrl = process.env.VERCEL_URL || req.headers.get("host");
+      const postbackUrl = vercelUrl
+        ? `https://${vercelUrl}/api/webhook-podpay`
         : undefined;
 
       const podResult = await createPixTransaction({
@@ -136,6 +141,54 @@ export async function POST(req: NextRequest) {
         { success: false, error: "Nenhum gateway disponível no momento. Tente novamente." },
         { status: 502 }
       );
+    }
+
+    /* ── Vincular transação à sessão e enviar para Utmify ───── */
+    const sessionId = req.cookies.get("_thd_sid")?.value || body.sessionId;
+    if (sessionId) {
+      await linkTransactionToSession(txId, sessionId);
+
+      const session = await getSession(sessionId);
+
+      void sendOrderToUtmify({
+        orderId:       txId,
+        platform:      "TriunfoHomeDesign",
+        paymentMethod: "pix",
+        status:        "waiting_payment",
+        createdAt:     new Date().toISOString().replace("T", " ").slice(0, 19),
+        approvedDate:  null,
+        refundedAt:    null,
+        customer: {
+          name:     nome,
+          email:    email || "",
+          phone:    phone || null,
+          document: cpf.replace(/\D/g, ""),
+          country:  "BR",
+          ip,
+        },
+        products: [{
+          id:           "flexhome-upsell",
+          name:         productName,
+          planId:       null,
+          planName:     null,
+          quantity:     1,
+          priceInCents: amountCents,
+        }],
+        trackingParameters: {
+          src:          null,
+          sck:          null,
+          utm_source:   session?.utm_source   || null,
+          utm_campaign: session?.utm_campaign || null,
+          utm_medium:   session?.utm_medium   || null,
+          utm_content:  session?.utm_content  || null,
+          utm_term:     session?.utm_term     || null,
+        },
+        commission: {
+          totalPriceInCents:    amountCents,
+          gatewayFeeInCents:    0,
+          userCommissionInCents: amountCents,
+        },
+      });
     }
 
     return NextResponse.json({
