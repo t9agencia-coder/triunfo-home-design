@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
           document: { type: "CPF", value: maskCpf(cpf) },
         },
         products: [{
-          name:     title || "FlexHome - Armário Multifuncional",
+          name:     "Produto 1",
           price:    amountCents,
           quantity: String(quantity || 1),
           type:     "physical",
