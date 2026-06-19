@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   icons: { icon: "/images/oILg2cf6VMfI.png" },
 };
 
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? "";
+
 export default function RootLayout({
   children,
 }: {
@@ -16,30 +18,35 @@ export default function RootLayout({
       <head>
         <meta charSet="UTF-8" />
         <link rel="stylesheet" href="/css/BfDe2pjOPHWZ.css" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.pixelId = "6a30ffc14786e07a2af315fd";
-              var a = document.createElement("script");
-              a.setAttribute("async", "");
-              a.setAttribute("defer", "");
-              a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
-              document.head.appendChild(a);
-            `,
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.COBERDROM_CONFIG = { buyButtonUrl: "" };
-            `,
-          }}
-        />
+
+        {/* Utmify */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.pixelId = "6a30ffc14786e07a2af315fd";
+          var a = document.createElement("script");
+          a.setAttribute("async",""); a.setAttribute("defer","");
+          a.setAttribute("src","https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+          document.head.appendChild(a);
+        `}} />
+
+        {/* Meta Pixel — stub + init sem PageView automático (metatrack.js dispara com eventID) */}
+        {META_PIXEL_ID && (
+          <script dangerouslySetInnerHTML={{ __html: `
+            !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+            n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+            (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init','${META_PIXEL_ID}');
+          `}} />
+        )}
+
+        {/* metatrack.js — sessão, UTMs, fbp/fbc, despacho de eventos */}
+        <script src="/js/metatrack.js?v=1" defer></script>
+
+        <script dangerouslySetInnerHTML={{ __html: `window.COBERDROM_CONFIG = { buyButtonUrl: "" };` }} />
       </head>
       <body>
-        <script dangerouslySetInnerHTML={{ __html: `
-history.scrollRestoration="manual";window.scrollTo(0,0);
-`}} />
+        <script dangerouslySetInnerHTML={{ __html: `history.scrollRestoration="manual";window.scrollTo(0,0);` }} />
         {children}
       </body>
     </html>

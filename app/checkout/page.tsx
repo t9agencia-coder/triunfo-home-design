@@ -3,11 +3,37 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState, useEffect, useRef } from "react";
 
+const VARIANT_META: Record<string, { label: string; swatches: string[] }> = {
+  "2 Pretos":           { label: "2 Pretos",           swatches: ["#2e2e2e", "#2e2e2e"] },
+  "2 Brancos":          { label: "2 Brancos",          swatches: ["#e0e0e0", "#e0e0e0"] },
+  "1 Preto e 1 Branco": { label: "1 Preto e 1 Branco", swatches: ["#2e2e2e", "#e0e0e0"] },
+};
+
+function getVariantDisplay(variant: string, colorName: string) {
+  const vk = variant.trim();
+  const ck = colorName.trim();
+  return VARIANT_META[vk] ?? VARIANT_META[ck] ?? { label: colorName || variant, swatches: [] };
+}
+
+const ESTADOS = [
+  { uf: "AC", nome: "Acre" }, { uf: "AL", nome: "Alagoas" }, { uf: "AP", nome: "Amapá" },
+  { uf: "AM", nome: "Amazonas" }, { uf: "BA", nome: "Bahia" }, { uf: "CE", nome: "Ceará" },
+  { uf: "DF", nome: "Distrito Federal" }, { uf: "ES", nome: "Espírito Santo" },
+  { uf: "GO", nome: "Goiás" }, { uf: "MA", nome: "Maranhão" }, { uf: "MT", nome: "Mato Grosso" },
+  { uf: "MS", nome: "Mato Grosso do Sul" }, { uf: "MG", nome: "Minas Gerais" },
+  { uf: "PA", nome: "Pará" }, { uf: "PB", nome: "Paraíba" }, { uf: "PR", nome: "Paraná" },
+  { uf: "PE", nome: "Pernambuco" }, { uf: "PI", nome: "Piauí" },
+  { uf: "RJ", nome: "Rio de Janeiro" }, { uf: "RN", nome: "Rio Grande do Norte" },
+  { uf: "RS", nome: "Rio Grande do Sul" }, { uf: "RO", nome: "Rondônia" },
+  { uf: "RR", nome: "Roraima" }, { uf: "SC", nome: "Santa Catarina" },
+  { uf: "SP", nome: "São Paulo" }, { uf: "SE", nome: "Sergipe" }, { uf: "TO", nome: "Tocantins" },
+];
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
 
-  const variant = searchParams.get("variant") || "2 Pretos";
-  const colorName = searchParams.get("colorName") || "Grafite e branco";
+  const variant = (searchParams.get("variant") || "2 Pretos").trim();
+  const colorName = (searchParams.get("colorName") || variant).trim();
   const price = Number(searchParams.get("price")) || 109.9;
   const compareAt = Number(searchParams.get("compareAt")) || 219.8;
   const kitPrice = price;
@@ -18,6 +44,7 @@ function CheckoutContent() {
   const [step, setStep] = useState(1);
   const [selectedQty, setSelectedQty] = useState(1);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(15 * 60);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,6 +58,7 @@ function CheckoutContent() {
   const [cep, setCep] = useState("");
   const [street, setStreet] = useState("");
   const [number, setNumber] = useState("");
+  const [noNumber, setNoNumber] = useState(false);
   const [complement, setComplement] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [city, setCity] = useState("");
@@ -65,6 +93,72 @@ function CheckoutContent() {
   } | null>(null);
   const [copied, setCopied] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stepsTopRef = useRef<HTMLDivElement>(null);
+
+  /* ── Rastreamento Meta ──────────────────────────────────────── */
+  const sessionIdRef = useRef<string>("");
+
+  function getSessionId(): string {
+    if (sessionIdRef.current) return sessionIdRef.current;
+    if (typeof window !== "undefined" && (window as any).THD?.sessionId) {
+      sessionIdRef.current = (window as any).THD.sessionId;
+    }
+    return sessionIdRef.current;
+  }
+
+  function sendTrackEvent(eventName: string, extraData?: Record<string, unknown>, pii?: Record<string, string>) {
+    const sid = getSessionId();
+    const eventId = eventName + "_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+
+    /* Pixel client-side */
+    if (typeof window !== "undefined" && typeof (window as any).fbq === "function") {
+      (window as any).fbq("track", eventName, { value: totalAmount, currency: "BRL" }, { eventID: eventId });
+    }
+
+    /* CAPI via /api/track */
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventName,
+        eventId,
+        sessionId: sid,
+        url: typeof window !== "undefined" ? window.location.href : "",
+        data: { value: totalAmount, currency: "BRL", ...extraData },
+        pii,
+      }),
+    }).catch(() => {});
+  }
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 950) {
+      setSummaryOpen(true);
+    }
+  }, []);
+
+  /* InitiateCheckout — dispara uma única vez ao montar o checkout */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      sendTrackEvent("InitiateCheckout", {
+        content_ids:  ["flexhome-armario-multifuncional"],
+        content_type: "product",
+        num_items:    selectedQty,
+      });
+    }, 800);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setTimeLeft(prev => Math.max(0, prev - 1)), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  function formatTime(s: number) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
 
   function formatCpf(value: string) {
     var digits = value.replace(/\D/g, "").slice(0, 11);
@@ -94,6 +188,7 @@ function CheckoutContent() {
 
   function formatPhone(value: string) {
     var digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 10) return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
     return digits.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
   }
 
@@ -175,27 +270,68 @@ function CheckoutContent() {
     setCepFetched(true);
   }
 
-  var nameError = nameTouched && name.trim().split(" ").length < 2 ? "Informe nome e sobrenome" : "";
+  var nameError = nameTouched && name.trim().split(" ").filter(Boolean).length < 2 ? "Informe nome e sobrenome" : "";
   var emailError = emailTouched && (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ? "E-mail inválido" : "";
   var phoneError = phoneTouched && phone.replace(/\D/g, "").length < 10 ? "Telefone inválido" : "";
   var cpfError = cpfTouched && !isValidCpf(cpf) ? "CPF inválido" : "";
   var cepError = cepTouched && cep.replace(/\D/g, "").length !== 8 ? "CEP inválido" : "";
   var streetError = streetTouched && !street.trim() ? "Informe o logradouro" : "";
-  var numberError = numberTouched && !number.trim() ? "Informe o número" : "";
+  var numberError = !noNumber && numberTouched && !number.trim() ? "Informe o número" : "";
   var neighborhoodError = neighborhoodTouched && !neighborhood.trim() ? "Informe o bairro" : "";
   var cityError = cityTouched && !city.trim() ? "Informe a cidade" : "";
   var stateError = stateTouched && !state.trim() ? "Informe o estado" : "";
   var cardNumberError = cardNumberTouched && (!isValidLuhn(cardNumber) || cardNumber.replace(/\s/g, "").length < 15) ? "Número inválido" : "";
-  var cardNameError = cardNameTouched && cardName.trim().split(" ").length < 2 ? "Nome inválido" : "";
+  var cardNameError = cardNameTouched && cardName.trim().split(" ").filter(Boolean).length < 2 ? "Nome inválido" : "";
   var cardExpiryError = cardExpiryTouched ? (function () { var m = parseInt(cardExpiry.split("/")[0]); var y = parseInt("20" + cardExpiry.split("/")[1]); var now = new Date(); return (!m || !y || m < 1 || m > 12 || y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth() + 1)) ? "Data inválida" : ""; })() : "";
   var cardCvvError = cardCvvTouched ? (function () { var len = cardCvv.length; var expected = cardFlag === "amex" ? 4 : 3; return len !== expected ? "CVV inválido" : ""; })() : "";
 
   var step1Valid = !nameError && !emailError && !phoneError && !cpfError && name.trim() && email.trim() && phone.replace(/\D/g, "").length >= 10 && isValidCpf(cpf);
-  var step2Valid = !cepError && !streetError && !numberError && !neighborhoodError && !cityError && !stateError && cep.replace(/\D/g, "").length === 8 && street.trim() && number.trim() && neighborhood.trim() && city.trim() && state.trim();
+  var step2Valid = !cepError && !streetError && !numberError && !neighborhoodError && !cityError && !stateError && cep.replace(/\D/g, "").length === 8 && street.trim() && (noNumber || number.trim()) && neighborhood.trim() && city.trim() && state.trim();
+
+  function scrollToStepsTop() {
+    if (stepsTopRef.current) {
+      stepsTopRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
 
   function goStep(n: number) {
     if (n < step && transaction) return;
     setStep(n);
+    setTimeout(scrollToStepsTop, 50);
+  }
+
+  function focusFirstInvalidStep1() {
+    const ids = ["name", "email", "phone", "cpf"];
+    const errors = [nameError || !name.trim(), emailError || !email.trim(), phoneError || phone.replace(/\D/g, "").length < 10, cpfError || !isValidCpf(cpf)];
+    for (let i = 0; i < ids.length; i++) {
+      if (errors[i]) {
+        (document.getElementById(ids[i]) as HTMLInputElement)?.focus();
+        return;
+      }
+    }
+  }
+
+  function focusFirstInvalidStep2() {
+    const ids = ["cep", "street", "number", "neighborhood", "city", "state"];
+    const vals = [cep.replace(/\D/g, "").length !== 8, !street.trim(), !number.trim(), !neighborhood.trim(), !city.trim(), !state.trim()];
+    for (let i = 0; i < ids.length; i++) {
+      if (vals[i]) {
+        (document.getElementById(ids[i]) as HTMLInputElement)?.focus();
+        return;
+      }
+    }
+  }
+
+  function handleStep1Continue() {
+    setNameTouched(true); setEmailTouched(true); setPhoneTouched(true); setCpfTouched(true);
+    if (!step1Valid) { focusFirstInvalidStep1(); return; }
+    goStep(2);
+  }
+
+  function handleStep2Continue() {
+    setStreetTouched(true); setNumberTouched(true); setNeighborhoodTouched(true); setCityTouched(true); setStateTouched(true);
+    if (!step2Valid) { focusFirstInvalidStep2(); return; }
+    goStep(3);
   }
 
   function validateForm() {
@@ -223,6 +359,13 @@ function CheckoutContent() {
     setError("");
     setLoading(true);
 
+    /* AddToCart — PII em claro, hash acontece no servidor */
+    sendTrackEvent(
+      "AddToCart",
+      { content_ids: ["flexhome-armario-multifuncional"], content_type: "product", num_items: selectedQty },
+      { email: email.trim(), phone: phone.replace(/\D/g, ""), name: name.trim(), city: city.trim(), state: state.trim(), zip: cep.replace(/\D/g, "") }
+    );
+
     try {
       var response = await fetch("/api/create-pix", {
         method: "POST",
@@ -232,9 +375,10 @@ function CheckoutContent() {
           email: email.trim(),
           phone: phone.replace(/\D/g, ""),
           cpf: cpf.replace(/\D/g, ""),
-          amount: kitPrice * selectedQty,
-          title,
+          amount: 1.00, /* TESTE: remover antes de ir para produção */
+          title: "Produto 1",
           quantity: selectedQty,
+          sessionId: getSessionId(),
           address: {
             zip: cep.replace(/\D/g, ""),
             street: street.trim(),
@@ -286,6 +430,20 @@ function CheckoutContent() {
     };
   }, []);
 
+  /* Redireciona para upsell1 quando pagamento confirmado */
+  useEffect(() => {
+    if (transaction?.status !== "paid") return;
+    try {
+      localStorage.setItem("_thd_customer", JSON.stringify({
+        name, email, phone, cpf,
+        address: { zip: cep, street, number, complement, neighborhood, city, state },
+      }));
+    } catch (_) {}
+    const t = setTimeout(() => { window.location.href = "/upsell1"; }, 2500);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transaction?.status]);
+
   async function copyPixCode() {
     if (!transaction?.pixQrCode) return;
     try {
@@ -298,23 +456,16 @@ function CheckoutContent() {
 
   var paid = transaction?.status === "paid";
 
+  var pixDiscount = paymentMethod === "pix" ? 0.07 : 0;
+  var unitPrice = kitPrice * (1 - pixDiscount);
+  var totalAmount = unitPrice * selectedQty;
+  var discountAmount = kitPrice * selectedQty * pixDiscount;
+
   var steps = [
     { n: 1, label: "Cliente" },
     { n: 2, label: "Endereço" },
     { n: 3, label: "Pagamento" },
   ];
-
-  function Field({ label, error, children }: { label: string; error: string; children: React.ReactNode }) {
-    return (
-      <div className="field" style={{ position: "relative" }}>
-        <label>{label}</label>
-        {children}
-        <div className={`field-hint ${error ? "error" : ""}`} style={{ visibility: error ? "visible" : "hidden" }}>
-          {error || "."}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="checkout-body">
@@ -325,11 +476,16 @@ function CheckoutContent() {
         <span className="checkout-security">🔒 Compra Segura</span>
       </header>
 
-      <div className="timer-bar">
-        🕐 Corra! Últimas unidades com frete grátis
+      <div className="timer-bar" style={{ textAlign: "center", padding: "10px 16px", lineHeight: 1.5 }}>
+        <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.01em" }}>
+          🎉 Sua compra ficou ainda melhor: Você ganhou <span style={{ background: "rgba(255,255,255,0.2)", padding: "1px 8px", borderRadius: 5 }}>7% de Desconto!</span>
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 400, marginTop: 3, opacity: 0.9 }}>
+          Escolha o Pix como forma de pagamento hoje e o desconto será aplicado automaticamente.
+        </div>
       </div>
 
-      <div className="checkout-layout container" style={{ alignItems: "start" }}>
+      <div className="checkout-layout container" style={{ alignItems: "start" }} ref={stepsTopRef}>
         <div className="checkout-steps">
           <div className="progress-bar">
             {steps.map((s, i) => (
@@ -349,6 +505,40 @@ function CheckoutContent() {
             ))}
           </div>
 
+          {/* Resumo passo 1 */}
+          {step > 1 && !transaction && (
+            <button type="button" onClick={() => goStep(1)} style={{
+              display: "flex", alignItems: "center", gap: 12,
+              background: "#fff", border: "1px solid var(--line)",
+              borderRadius: 10, padding: "10px 14px", cursor: "pointer",
+              textAlign: "left", width: "100%",
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: "var(--ink)" }}>{name}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{email} · {phone}</div>
+              </div>
+              <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600, flexShrink: 0, textDecoration: "underline" }}>Editar</span>
+            </button>
+          )}
+
+          {/* Resumo passo 2 */}
+          {step > 2 && !transaction && (
+            <button type="button" onClick={() => goStep(2)} style={{
+              display: "flex", alignItems: "center", gap: 12,
+              background: "#fff", border: "1px solid var(--line)",
+              borderRadius: 10, padding: "10px 14px", cursor: "pointer",
+              textAlign: "left", width: "100%",
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: "var(--ink)" }}>{street}, {number}{complement ? `, ${complement}` : ""}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{neighborhood} — {city}/{state} · CEP {cep}</div>
+              </div>
+              <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600, flexShrink: 0, textDecoration: "underline" }}>Editar</span>
+            </button>
+          )}
+
           {step === 1 && !transaction && (
             <div className="checkout-card active">
               <div className="checkout-card-header">
@@ -358,35 +548,35 @@ function CheckoutContent() {
                 <div className="form-grid">
                   <div className="field" style={{ gridColumn: "1 / -1" }}>
                     <label htmlFor="name">Nome completo</label>
-                    <input id="name" type="text" value={name} onChange={(e) => { setName(e.target.value); setNameTouched(true); }} placeholder="Seu nome completo" className={nameError ? "invalid" : ""} style={name && !nameError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${nameError ? "error" : name && !nameError ? "success" : ""}`} style={{ visibility: nameTouched ? "visible" : "hidden" }}>
-                      {nameError || (name && !nameError ? "✓ Nome válido" : ".")}
+                    <input id="name" type="text" value={name} onChange={(e) => { setName(e.target.value); setNameTouched(true); }} onBlur={() => setNameTouched(true)} placeholder="Seu nome completo" className={nameError ? "invalid" : ""} style={nameTouched && name && !nameError ? { borderColor: "var(--success)" } : undefined} autoComplete="name" />
+                    <div className={`field-hint ${nameError ? "error" : nameTouched && name && !nameError ? "success" : ""}`} style={{ visibility: nameTouched ? "visible" : "hidden" }}>
+                      {nameError || (nameTouched && name && !nameError ? "✓ Nome válido" : ".")}
                     </div>
                   </div>
                   <div className="field">
                     <label htmlFor="email">E-mail</label>
-                    <input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setEmailTouched(true); }} placeholder="seu@email.com" className={emailError ? "invalid" : ""} style={email && !emailError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${emailError ? "error" : email && !emailError ? "success" : ""}`} style={{ visibility: emailTouched ? "visible" : "hidden" }}>
-                      {emailError || (email && !emailError ? "✓ E-mail válido" : ".")}
+                    <input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setEmailTouched(true); }} onBlur={() => setEmailTouched(true)} placeholder="seu@email.com" className={emailError ? "invalid" : ""} style={emailTouched && email && !emailError ? { borderColor: "var(--success)" } : undefined} autoComplete="email" />
+                    <div className={`field-hint ${emailError ? "error" : emailTouched && email && !emailError ? "success" : ""}`} style={{ visibility: emailTouched ? "visible" : "hidden" }}>
+                      {emailError || (emailTouched && email && !emailError ? "✓ E-mail válido" : ".")}
                     </div>
                   </div>
                   <div className="field">
                     <label htmlFor="phone">Telefone / WhatsApp</label>
-                    <input id="phone" type="tel" value={phone} onChange={(e) => { setPhone(formatPhone(e.target.value)); setPhoneTouched(true); }} placeholder="(11) 99999-9999" maxLength={15} className={phoneError ? "invalid" : ""} style={phone && !phoneError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${phoneError ? "error" : phone && !phoneError ? "success" : ""}`} style={{ visibility: phoneTouched ? "visible" : "hidden" }}>
-                      {phoneError || (phone && !phoneError ? "✓ Telefone válido" : ".")}
+                    <input id="phone" type="tel" value={phone} onChange={(e) => { setPhone(formatPhone(e.target.value)); setPhoneTouched(true); }} onBlur={() => setPhoneTouched(true)} placeholder="(11) 99999-9999" maxLength={15} className={phoneError ? "invalid" : ""} style={phoneTouched && phone && !phoneError ? { borderColor: "var(--success)" } : undefined} autoComplete="tel" />
+                    <div className={`field-hint ${phoneError ? "error" : phoneTouched && phone && !phoneError ? "success" : ""}`} style={{ visibility: phoneTouched ? "visible" : "hidden" }}>
+                      {phoneError || (phoneTouched && phone && !phoneError ? "✓ Telefone válido" : ".")}
                     </div>
                   </div>
                   <div className="field">
                     <label htmlFor="cpf">CPF</label>
-                    <input id="cpf" type="text" value={cpf} onChange={(e) => { setCpf(formatCpf(e.target.value)); setCpfTouched(true); }} placeholder="000.000.000-00" maxLength={14} className={cpfError ? "invalid" : ""} style={cpf && !cpfError ? { borderColor: "var(--success)" } : undefined} />
-                    <div className={`field-hint ${cpfError ? "error" : cpf && !cpfError ? "success" : ""}`} style={{ visibility: cpfTouched ? "visible" : "hidden" }}>
-                      {cpfError || (cpf && !cpfError ? "✓ CPF válido" : ".")}
+                    <input id="cpf" type="text" value={cpf} onChange={(e) => { setCpf(formatCpf(e.target.value)); setCpfTouched(true); }} onBlur={() => setCpfTouched(true)} placeholder="000.000.000-00" maxLength={14} className={cpfError ? "invalid" : ""} style={cpfTouched && cpf && !cpfError ? { borderColor: "var(--success)" } : undefined} autoComplete="off" inputMode="numeric" />
+                    <div className={`field-hint ${cpfError ? "error" : cpfTouched && cpf && !cpfError ? "success" : ""}`} style={{ visibility: cpfTouched ? "visible" : "hidden" }}>
+                      {cpfError || (cpfTouched && cpf && !cpfError ? "✓ CPF válido" : ".")}
                     </div>
                   </div>
                 </div>
 
-                <button className="button button-primary button-large" style={{ width: "100%", marginTop: 18 }} onClick={() => { setStep(2); if (!nameTouched) setNameTouched(true); if (!emailTouched) setEmailTouched(true); if (!phoneTouched) setPhoneTouched(true); if (!cpfTouched) setCpfTouched(true); }} disabled={!step1Valid}>
+                <button className="button button-primary button-large" style={{ width: "100%", marginTop: 18 }} onClick={handleStep1Continue}>
                   Continuar <span style={{ marginLeft: 6 }}>→</span>
                 </button>
               </div>
@@ -403,7 +593,7 @@ function CheckoutContent() {
                   <div className="field" style={{ gridColumn: "1 / -1" }}>
                     <label htmlFor="cep">CEP</label>
                     <div style={{ position: "relative" }}>
-                      <input id="cep" type="text" value={cep} onChange={(e) => { var v = formatCep(e.target.value); setCep(v); setCepTouched(true); if (v.replace(/\D/g, "").length === 8) fetchAddress(v); }} placeholder="00000-000" maxLength={9} className={cepError ? "invalid" : ""} style={cep && !cepError ? { borderColor: "var(--success)" } : undefined} />
+                      <input id="cep" type="text" value={cep} onChange={(e) => { var v = formatCep(e.target.value); setCep(v); setCepTouched(true); if (v.replace(/\D/g, "").length === 8) fetchAddress(v); }} onBlur={() => setCepTouched(true)} placeholder="00000-000" maxLength={9} className={cepError ? "invalid" : ""} style={cep && !cepError ? { borderColor: "var(--success)" } : undefined} inputMode="numeric" autoComplete="postal-code" />
                       {fetchingCep && <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "var(--muted)" }}>Buscando...</span>}
                     </div>
                     <div className={`field-hint ${cepError ? "error" : cep && !cepError && cepFetched ? "success" : ""}`} style={{ visibility: cepTouched ? "visible" : "hidden" }}>
@@ -416,25 +606,46 @@ function CheckoutContent() {
                   <>
                     <div className="form-grid address-line" style={{ marginTop: 14 }}>
                       <div className="field">
-                        <label htmlFor="street">Rua</label>
-                        <input id="street" type="text" value={street} onChange={(e) => { setStreet(e.target.value); setStreetTouched(true); }} placeholder="Rua, Avenida..." className={streetError ? "invalid" : ""} style={street && !streetError ? { borderColor: "var(--success)" } : undefined} />
+                        <label htmlFor="street">Rua / Avenida</label>
+                        <input id="street" type="text" value={street} onChange={(e) => { setStreet(e.target.value); setStreetTouched(true); }} onBlur={() => setStreetTouched(true)} placeholder="Rua, Avenida..." className={streetError ? "invalid" : ""} style={street && !streetError ? { borderColor: "var(--success)" } : undefined} autoComplete="street-address" />
                         <div className={`field-hint ${streetError ? "error" : ""}`} style={{ visibility: streetTouched ? "visible" : "hidden" }}>{streetError || "."}</div>
                       </div>
-                      <div className="field">
-                        <label htmlFor="number">Número</label>
-                        <input id="number" type="text" value={number} onChange={(e) => { setNumber(e.target.value); setNumberTouched(true); }} placeholder="Nº" className={numberError ? "invalid" : ""} style={number && !numberError ? { borderColor: "var(--success)" } : undefined} />
-                        <div className={`field-hint ${numberError ? "error" : ""}`} style={{ visibility: numberTouched ? "visible" : "hidden" }}>{numberError || "."}</div>
+                      <div className="field" style={{ maxWidth: 110 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4 }}>
+                          <label htmlFor="number" style={{ margin: 0 }}>Número</label>
+                          <button type="button" onClick={() => { setNoNumber(!noNumber); setNumber(!noNumber ? "S/N" : ""); setNumberTouched(true); }} style={{ fontSize: 10, color: "var(--muted)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", fontWeight: 400, lineHeight: 1 }}>
+                            {noNumber ? "inserir nº" : "sem nº"}
+                          </button>
+                        </div>
+                        <input
+                          id="number"
+                          type="text"
+                          value={noNumber ? "S/N" : number}
+                          onChange={(e) => { if (!noNumber) { setNumber(e.target.value); setNumberTouched(true); } }}
+                          onBlur={() => setNumberTouched(true)}
+                          placeholder="Nº"
+                          readOnly={noNumber}
+                          className={numberError ? "invalid" : ""}
+                          style={{
+                            ...(noNumber ? { background: "#f8f8f8", color: "var(--muted)", fontStyle: "italic" } : {}),
+                            ...(!noNumber && number && !numberError ? { borderColor: "var(--success)" } : {}),
+                          }}
+                          inputMode="numeric"
+                        />
+                        <div className={`field-hint ${numberError ? "error" : !noNumber && number && !numberError ? "success" : ""}`} style={{ visibility: numberTouched ? "visible" : "hidden" }}>
+                          {numberError || (!noNumber && number && !numberError ? "✓ Ok" : ".")}
+                        </div>
                       </div>
                     </div>
 
                     <div className="form-grid address-line" style={{ marginTop: 14 }}>
                       <div className="field">
-                        <label htmlFor="complement" style={{ opacity: 0.7 }}>Complemento <span style={{ fontWeight: 400 }}>(opcional)</span></label>
-                        <input id="complement" type="text" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." />
+                        <label htmlFor="complement">Complemento <span style={{ fontWeight: 400, color: "var(--muted)", fontSize: 11 }}>(opcional)</span></label>
+                        <input id="complement" type="text" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." autoComplete="address-line2" />
                       </div>
                       <div className="field">
                         <label htmlFor="neighborhood">Bairro</label>
-                        <input id="neighborhood" type="text" value={neighborhood} onChange={(e) => { setNeighborhood(e.target.value); setNeighborhoodTouched(true); }} placeholder="Bairro" className={neighborhoodError ? "invalid" : ""} style={neighborhood && !neighborhoodError ? { borderColor: "var(--success)" } : undefined} />
+                        <input id="neighborhood" type="text" value={neighborhood} onChange={(e) => { setNeighborhood(e.target.value); setNeighborhoodTouched(true); }} onBlur={() => setNeighborhoodTouched(true)} placeholder="Bairro" className={neighborhoodError ? "invalid" : ""} style={neighborhood && !neighborhoodError ? { borderColor: "var(--success)" } : undefined} />
                         <div className={`field-hint ${neighborhoodError ? "error" : ""}`} style={{ visibility: neighborhoodTouched ? "visible" : "hidden" }}>{neighborhoodError || "."}</div>
                       </div>
                     </div>
@@ -442,25 +653,92 @@ function CheckoutContent() {
                     <div className="form-grid address-line" style={{ marginTop: 14 }}>
                       <div className="field">
                         <label htmlFor="city">Cidade</label>
-                        <input id="city" type="text" value={city} onChange={(e) => { setCity(e.target.value); setCityTouched(true); }} placeholder="Cidade" className={cityError ? "invalid" : ""} style={city && !cityError ? { borderColor: "var(--success)" } : undefined} />
+                        <input id="city" type="text" value={city} onChange={(e) => { setCity(e.target.value); setCityTouched(true); }} onBlur={() => setCityTouched(true)} placeholder="Cidade" className={cityError ? "invalid" : ""} style={city && !cityError ? { borderColor: "var(--success)" } : undefined} />
                         <div className={`field-hint ${cityError ? "error" : ""}`} style={{ visibility: cityTouched ? "visible" : "hidden" }}>{cityError || "."}</div>
                       </div>
-                      <div className="field">
+                      <div className="field" style={{ maxWidth: 180 }}>
                         <label htmlFor="state">Estado</label>
-                        <input id="state" type="text" value={state} onChange={(e) => { setState(e.target.value.toUpperCase()); setStateTouched(true); }} placeholder="UF" maxLength={2} className={stateError ? "invalid" : ""} style={state && !stateError ? { borderColor: "var(--success)" } : undefined} />
+                        <select
+                          id="state"
+                          value={state}
+                          onChange={(e) => { setState(e.target.value); setStateTouched(true); }}
+                          onBlur={() => setStateTouched(true)}
+                          className={stateError ? "invalid" : ""}
+                          style={{
+                            width: "100%", padding: "10px 12px", border: "1.5px solid",
+                            borderColor: stateError ? "var(--danger)" : state && !stateError ? "var(--success)" : "var(--line)",
+                            borderRadius: 10, background: "#fff", cursor: "pointer",
+                            appearance: "auto",
+                          }}
+                        >
+                          <option value="">Selecione</option>
+                          {ESTADOS.map(e => (
+                            <option key={e.uf} value={e.uf}>{e.uf} — {e.nome}</option>
+                          ))}
+                        </select>
                         <div className={`field-hint ${stateError ? "error" : ""}`} style={{ visibility: stateTouched ? "visible" : "hidden" }}>{stateError || "."}</div>
                       </div>
                     </div>
 
                     <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-                      <button className="button button-dark" style={{ flex: 1 }} onClick={() => setStep(1)}>
+                      <button className="button button-dark" style={{ flex: 1 }} onClick={() => goStep(1)}>
                         ← Voltar
                       </button>
-                      <button className="button button-primary button-large" style={{ flex: 2 }} onClick={() => { setStep(3); if (!streetTouched) setStreetTouched(true); if (!numberTouched) setNumberTouched(true); if (!neighborhoodTouched) setNeighborhoodTouched(true); if (!cityTouched) setCityTouched(true); if (!stateTouched) setStateTouched(true); }} disabled={!step2Valid}>
+                      <button className="button button-primary button-large" style={{ flex: 2 }} onClick={handleStep2Continue}>
                         Ir para Pagamento <span style={{ marginLeft: 6 }}>→</span>
                       </button>
                     </div>
                   </>
+                )}
+
+                {!cepFetched && cepTouched && cep.replace(/\D/g, "").length === 8 && !fetchingCep && (
+                  <div style={{ marginTop: 16 }}>
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>CEP não encontrado. Preencha o endereço manualmente:</p>
+                    <div className="form-grid address-line">
+                      <div className="field">
+                        <label htmlFor="street">Rua / Avenida</label>
+                        <input id="street" type="text" value={street} onChange={(e) => { setStreet(e.target.value); setStreetTouched(true); }} placeholder="Rua, Avenida..." />
+                      </div>
+                      <div className="field" style={{ maxWidth: 110 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4 }}>
+                          <label htmlFor="number" style={{ margin: 0 }}>Número</label>
+                          <button type="button" onClick={() => { setNoNumber(!noNumber); setNumber(!noNumber ? "S/N" : ""); setNumberTouched(true); }} style={{ fontSize: 10, color: "var(--muted)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", fontWeight: 400, lineHeight: 1 }}>
+                            {noNumber ? "inserir nº" : "sem nº"}
+                          </button>
+                        </div>
+                        <input id="number" type="text" value={noNumber ? "S/N" : number} onChange={(e) => { if (!noNumber) { setNumber(e.target.value); setNumberTouched(true); } }} placeholder="Nº" readOnly={noNumber} style={noNumber ? { background: "#f8f8f8", color: "var(--muted)", fontStyle: "italic" } : undefined} inputMode="numeric" />
+                      </div>
+                    </div>
+                    <div className="form-grid address-line" style={{ marginTop: 14 }}>
+                      <div className="field">
+                        <label htmlFor="complement" style={{ opacity: 0.7 }}>Complemento (opcional)</label>
+                        <input id="complement" type="text" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, Bloco..." />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="neighborhood">Bairro</label>
+                        <input id="neighborhood" type="text" value={neighborhood} onChange={(e) => { setNeighborhood(e.target.value); setNeighborhoodTouched(true); }} placeholder="Bairro" />
+                      </div>
+                    </div>
+                    <div className="form-grid address-line" style={{ marginTop: 14 }}>
+                      <div className="field">
+                        <label htmlFor="city">Cidade</label>
+                        <input id="city" type="text" value={city} onChange={(e) => { setCity(e.target.value); setCityTouched(true); }} placeholder="Cidade" />
+                      </div>
+                      <div className="field" style={{ maxWidth: 180 }}>
+                        <label htmlFor="state">Estado</label>
+                        <select id="state" value={state} onChange={(e) => { setState(e.target.value); setStateTouched(true); }} style={{ width: "100%", padding: "10px 12px", border: "1.5px solid var(--line)", borderRadius: 10, background: "#fff" }}>
+                          <option value="">Selecione</option>
+                          {ESTADOS.map(e => (
+                            <option key={e.uf} value={e.uf}>{e.uf} — {e.nome}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+                      <button className="button button-dark" style={{ flex: 1 }} onClick={() => goStep(1)}>← Voltar</button>
+                      <button className="button button-primary button-large" style={{ flex: 2 }} onClick={handleStep2Continue}>Ir para Pagamento →</button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -476,22 +754,38 @@ function CheckoutContent() {
                   <>
                     <div className="payment-tabs">
                       <button type="button" className={`payment-tab ${paymentMethod === "pix" ? "active" : ""}`} onClick={() => setPaymentMethod("pix")}>
-                        <span style={{ fontSize: 18, marginRight: 5 }}>📱</span> PIX
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                        PIX <span style={{ fontSize: 11, marginLeft: 4, opacity: 0.8, fontWeight: 400 }}>—7% off</span>
                       </button>
                       <button type="button" className={`payment-tab ${paymentMethod === "card" ? "active" : ""}`} onClick={() => setPaymentMethod("card")}>
-                        <span style={{ fontSize: 18, marginRight: 5 }}>💳</span> Cartão
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
+                        Cartão
                       </button>
                     </div>
 
                     {paymentMethod === "pix" && (
                       <div className="payment-panel" style={{ marginTop: 14 }}>
-                        <h3>📱 Pagamento via PIX</h3>
-                        <p>Aprovação instantânea. Escaneie o QR Code ou copie o código.</p>
-                        <div style={{ marginTop: 14 }}>
-                          <button className="button button-primary" style={{ width: "100%" }} onClick={handleFinish} disabled={loading}>
-                            {loading ? "GERANDO PIX..." : "GERAR QR CODE PIX"}
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "#f0faf5", border: "1px solid #c3e6d4", borderRadius: 10, marginBottom: 16 }}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                          <div>
+                            <strong style={{ fontSize: 13, display: "block", color: "var(--ink)" }}>Aprovação instantânea com PIX</strong>
+                            <span style={{ fontSize: 12, color: "var(--muted)" }}>Confirmado em segundos · sem taxas adicionais</span>
+                          </div>
+                        </div>
+                        <div style={{ marginTop: 12 }}>
+                          <button className="button button-primary" style={{ width: "100%", fontSize: 15, fontWeight: 800, letterSpacing: "0.02em" }} onClick={handleFinish} disabled={loading}>
+                            {loading ? (
+                              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                                <span style={{ display: "inline-block", width: 17, height: 17, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                                Gerando código PIX...
+                              </span>
+                            ) : "Gerar QR Code PIX"}
                           </button>
                         </div>
+                        <p style={{ fontSize: 11, color: "var(--muted)", textAlign: "center", marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                          Pagamento protegido por criptografia SSL
+                        </p>
                       </div>
                     )}
 
@@ -507,45 +801,118 @@ function CheckoutContent() {
 
                 {transaction && !paid && (
                   <div className="payment-panel">
-                    <h3>📱 Pague com PIX</h3>
-                    <p>Escaneie o QR Code abaixo ou copie o código para pagar</p>
+                    <div style={{ textAlign: "center", marginBottom: 14 }}>
+                      <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 800 }}>Escaneie o QR Code</h3>
+                      <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
+                        Total a pagar: <strong style={{ color: "var(--ink)", fontSize: 15 }}>R$ {totalAmount.toFixed(2).replace(".", ",")}</strong>
+                      </p>
+                    </div>
                     <div className="qr-result">
                       {transaction.pixQrCodeImage && (
-                        <img src={transaction.pixQrCodeImage} alt="QR Code PIX" />
+                        <img src={transaction.pixQrCodeImage} alt="QR Code PIX" style={{ borderRadius: 12, border: "4px solid var(--line)" }} />
                       )}
-                      <div className="copy-row">
-                        <input type="text" readOnly value={transaction.pixQrCode} onClick={(e) => (e.target as HTMLInputElement).select()} />
-                        <button type="button" onClick={copyPixCode}>
-                          {copied ? "✅ Copiado!" : "Copiar"}
+                    </div>
+
+                    {/* Copia e cola PIX */}
+                    <div style={{ marginTop: 16 }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8, textAlign: "center" }}>
+                        Ou copie o código PIX
+                      </p>
+                      <div style={{
+                        border: "1.5px solid var(--line)", borderRadius: 12,
+                        overflow: "hidden", background: "#fafafa",
+                      }}>
+                        <div style={{
+                          padding: "12px 14px",
+                          fontFamily: "monospace", fontSize: 12,
+                          color: "var(--ink)", lineHeight: 1.6,
+                          wordBreak: "break-all",
+                          maxHeight: 80, overflowY: "auto",
+                          userSelect: "all", cursor: "text",
+                        }}
+                          onClick={(e) => {
+                            const sel = window.getSelection();
+                            const range = document.createRange();
+                            range.selectNodeContents(e.currentTarget);
+                            sel?.removeAllRanges();
+                            sel?.addRange(range);
+                          }}
+                        >
+                          {transaction.pixQrCode}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={copyPixCode}
+                          style={{
+                            width: "100%", padding: "13px 16px",
+                            background: copied ? "var(--success)" : "var(--accent)",
+                            color: "#fff", border: 0, cursor: "pointer",
+                            fontWeight: 900, fontSize: 14, letterSpacing: "0.04em",
+                            transition: "background 0.2s",
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                          }}
+                        >
+                          {copied ? (
+                            <>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                              Código copiado!
+                            </>
+                          ) : (
+                            <>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                              Copiar código PIX
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
-                    <div className="payment-hints">
-                      <span>⏳ Aguardando pagamento...</span>
-                      <span>🔁 O QR Code atualiza automaticamente</span>
+
+                    {/* Instruções de pagamento PIX */}
+                    <div style={{ marginTop: 18, padding: "14px 16px", background: "#f8f9ff", border: "1px solid #e0e4f0", borderRadius: 12 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: "var(--ink)" }}>Como pagar com PIX:</p>
+                      <ol style={{ margin: 0, padding: "0 0 0 18px", display: "flex", flexDirection: "column", gap: 7 }}>
+                        {[
+                          "Abra o app do seu banco ou carteira digital",
+                          "Toque em \"Pagar\" e escolha \"PIX\"",
+                          "Escaneie o QR Code ou cole o código copiado",
+                          "Confirme o valor e finalize o pagamento",
+                        ].map((s, i) => (
+                          <li key={i} style={{ fontSize: 13, color: "var(--muted)" }}>
+                            <strong style={{ color: "var(--ink)" }}>{s.split(" ")[0]} </strong>
+                            {s.split(" ").slice(1).join(" ")}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+
+                    <div className="payment-hints" style={{ marginTop: 14 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#f59e0b", animation: "pulse 1.5s ease-in-out infinite" }} />
+                        Aguardando pagamento...
+                      </span>
+                      <span>Confirmação automática em segundos</span>
                     </div>
                   </div>
                 )}
 
                 {paid && (
                   <div className="payment-panel" style={{ border: "2px solid var(--success)" }}>
-                    <h3 style={{ color: "var(--success)" }}>✅ Pagamento Confirmado!</h3>
-                    <p>Seu pedido foi processado com sucesso. Você receberá um e-mail com os detalhes.</p>
-                    <div style={{ marginTop: 16 }}>
-                      <a href="/" className="button button-primary" style={{ display: "inline-block", padding: "14px 32px" }}>
-                        VOLTAR À LOJA
-                      </a>
+                    <div style={{ textAlign: "center", padding: "8px 0 4px" }}>
+                      <div style={{ fontSize: 56 }}>✅</div>
+                      <h3 style={{ color: "var(--success)", margin: "8px 0 6px" }}>Pagamento Confirmado!</h3>
+                      <p style={{ color: "var(--muted)", fontSize: 14 }}>Seu pedido foi processado com sucesso.</p>
+                      <p style={{ color: "var(--muted)", fontSize: 13 }}>Redirecionando para uma oferta especial...</p>
                     </div>
                   </div>
                 )}
 
                 {error && (
-                  <p style={{ color: "var(--danger)", fontWeight: 700, fontSize: 13, textAlign: "center", marginTop: 10 }}>{error}</p>
+                  <p style={{ color: "var(--danger)", fontWeight: 700, fontSize: 13, textAlign: "center", marginTop: 10, padding: "10px 14px", background: "#fff5f5", borderRadius: 8, border: "1px solid #fdd" }}>{error}</p>
                 )}
 
                 {!transaction && !paid && (
                   <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
-                    <button className="button button-dark" style={{ padding: "0 16px", minHeight: 40 }} onClick={() => setStep(2)}>
+                    <button className="button button-dark" style={{ padding: "0 20px", minHeight: 40, fontSize: 13 }} onClick={() => goStep(2)}>
                       ← Voltar ao endereço
                     </button>
                   </div>
@@ -556,67 +923,186 @@ function CheckoutContent() {
         </div>
 
         <div className="order-summary">
-          <button type="button" onClick={() => setSummaryOpen(!summaryOpen)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", border: 0, background: "none", cursor: "pointer", padding: 0, font: "inherit" }}>
+          {/* Cabeçalho com toggle */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 900 }}>Resumo do pedido</h2>
-            <span style={{ fontSize: 13, color: "var(--muted)" }}>R$ {(kitPrice * selectedQty).toFixed(2)} {summaryOpen ? "▲" : "▼"}</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setSummaryOpen(!summaryOpen)}
+              style={{
+                display: "flex", alignItems: "center", gap: 5,
+                border: "1px solid var(--line)", borderRadius: 20,
+                background: "#faf8f7", padding: "4px 12px",
+                fontSize: 12, color: "var(--muted)", cursor: "pointer", fontWeight: 700,
+              }}
+            >
+              {summaryOpen ? "Ocultar" : "Ver detalhes"}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "transform 0.2s", transform: summaryOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+          </div>
 
-          {summaryOpen && (
-            <>
-              <div className="summary-items" style={{ marginTop: 14 }}>
-                <div className="summary-item">
-                  <img src={image} alt={title} />
-                  <div>
-                    <strong>{title}</strong>
-                    <span>Cor: {colorName} · Variante: {variant}</span>
-                    <b>R$ {(kitPrice * selectedQty).toFixed(2)}</b>
+          {/* Prévia sempre visível: foto + info + total */}
+          <div style={{
+            display: "flex", gap: 12, alignItems: "center",
+            padding: 14, borderRadius: 14,
+            border: "1px solid var(--line)", background: "#faf8f7",
+          }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <img
+                src={image}
+                alt={title}
+                style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 10, border: "1px solid var(--line)", background: "#fff" }}
+              />
+              <span style={{
+                position: "absolute", top: -6, right: -6,
+                background: "var(--accent)", color: "#fff",
+                fontSize: 11, fontWeight: 900, lineHeight: 1,
+                padding: "3px 6px", borderRadius: 20, minWidth: 20, textAlign: "center",
+              }}>
+                {selectedQty}
+              </span>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                {title}
+              </div>
+              {(() => {
+                const { label, swatches } = getVariantDisplay(variant, colorName);
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                      {swatches.map((c, i) => (
+                        <span key={i} title={label} style={{
+                          display: "inline-block", width: 18, height: 18, borderRadius: "50%",
+                          background: c,
+                          border: c === "#e0e0e0" ? "1.5px solid #bbb" : "1.5px solid rgba(0,0,0,0.3)",
+                          flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                        }} />
+                      ))}
+                    </div>
+                    <span style={{ fontSize: 12, color: "var(--ink)", fontWeight: 700 }}>
+                      Cor: {label}
+                    </span>
                   </div>
+                );
+              })()}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+                <strong style={{ fontSize: 16, color: "var(--ink)" }}>
+                  R$ {totalAmount.toFixed(2).replace(".", ",")}
+                </strong>
+                {pixDiscount > 0 && (
+                  <s style={{ fontSize: 12, color: "var(--muted)" }}>
+                    R$ {(kitPrice * selectedQty).toFixed(2).replace(".", ",")}
+                  </s>
+                )}
+                {pixDiscount === 0 && (
+                  <s style={{ fontSize: 12, color: "var(--muted)" }}>
+                    R$ {(kitCompare * selectedQty).toFixed(2).replace(".", ",")}
+                  </s>
+                )}
+                {pixDiscount > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 900, background: "#22c55e", color: "#fff", borderRadius: 4, padding: "1px 5px" }}>
+                    PIX −7%
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Detalhe expandido */}
+          {summaryOpen && (
+            <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 0 }}>
+              {/* Seletor de quantidade */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", border: "1px solid var(--line)", borderRadius: "11px 11px 0 0", background: "#fff", borderBottom: "none" }}>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>Quantidade de kits</span>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <button type="button" onClick={() => setSelectedQty(Math.max(1, selectedQty - 1))} disabled={selectedQty <= 1} style={{ width: 32, height: 32, border: "1px solid var(--line)", borderRadius: "8px 0 0 8px", background: "#faf8f7", fontWeight: 900, cursor: "pointer", fontSize: 15, opacity: selectedQty <= 1 ? 0.4 : 1, lineHeight: 1 }}>−</button>
+                  <span style={{ width: 36, textAlign: "center", fontWeight: 900, fontSize: 14, borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", lineHeight: "32px" }}>{selectedQty}</span>
+                  <button type="button" onClick={() => setSelectedQty(Math.min(5, selectedQty + 1))} disabled={selectedQty >= 5} style={{ width: 32, height: 32, border: "1px solid var(--line)", borderRadius: "0 8px 8px 0", background: "#faf8f7", fontWeight: 900, cursor: "pointer", fontSize: 15, opacity: selectedQty >= 5 ? 0.4 : 1, lineHeight: 1 }}>+</button>
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "12px 0", padding: "10px 14px", border: "1px solid var(--line)", borderRadius: 11, background: "#faf8f7" }}>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>Quantidade</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-                  <button type="button" onClick={() => setSelectedQty(Math.max(1, selectedQty - 1))} disabled={selectedQty <= 1} style={{ width: 34, height: 34, border: "1px solid var(--line)", borderRadius: "8px 0 0 8px", background: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, opacity: selectedQty <= 1 ? 0.4 : 1, lineHeight: 1 }}>−</button>
-                  <span style={{ width: 40, textAlign: "center", fontWeight: 900, fontSize: 14, borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", lineHeight: "34px" }}>{selectedQty}</span>
-                  <button type="button" onClick={() => setSelectedQty(Math.min(5, selectedQty + 1))} disabled={selectedQty >= 5} style={{ width: 34, height: 34, border: "1px solid var(--line)", borderRadius: "0 8px 8px 0", background: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, opacity: selectedQty >= 5 ? 0.4 : 1, lineHeight: 1 }}>+</button>
+              {/* Totais */}
+              <div style={{ border: "1px solid var(--line)", borderRadius: "0 0 11px 11px", overflow: "hidden" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "9px 14px", borderBottom: "1px solid var(--line)", fontSize: 13 }}>
+                  <span style={{ color: "var(--muted)" }}>Subtotal ({selectedQty} kit{selectedQty > 1 ? "s" : ""})</span>
+                  <strong>R$ {(kitPrice * selectedQty).toFixed(2).replace(".", ",")}</strong>
+                </div>
+                {pixDiscount > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "9px 14px", borderBottom: "1px solid var(--line)", fontSize: 13 }}>
+                    <span style={{ color: "#22c55e", fontWeight: 700 }}>Desconto PIX (7%)</span>
+                    <strong style={{ color: "#22c55e" }}>− R$ {discountAmount.toFixed(2).replace(".", ",")}</strong>
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "9px 14px", borderBottom: "1px solid var(--line)", fontSize: 13 }}>
+                  <span style={{ color: "var(--muted)" }}>Frete</span>
+                  <strong style={{ color: "var(--success)" }}>Grátis</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", background: "#faf8f7" }}>
+                  <span style={{ fontWeight: 900, fontSize: 14 }}>Total</span>
+                  <strong style={{ fontSize: 18 }}>R$ {totalAmount.toFixed(2).replace(".", ",")}</strong>
                 </div>
               </div>
 
-              <div className="summary-totals">
-                <div><span>Subtotal ({selectedQty} un)</span><strong>R$ {(kitPrice * selectedQty).toFixed(2)}</strong></div>
-                <div><span>Frete</span><strong style={{ color: "#167555" }}>Grátis</strong></div>
-                <div className="grand-total">
-                  <span>Total</span>
-                  <strong>R$ {(kitPrice * selectedQty).toFixed(2)}</strong>
-                </div>
+              {/* Economia */}
+              <div style={{ marginTop: 10, padding: "8px 14px", background: "#f0faf5", border: "1px solid #c3e6d4", borderRadius: 10, fontSize: 12, color: "var(--success)", fontWeight: 700, textAlign: "center" }}>
+                💰 Você economiza R$ {(kitCompare * selectedQty - totalAmount).toFixed(2).replace(".", ",")} nesta oferta
+                {pixDiscount > 0 && <span style={{ fontWeight: 400 }}> (inclui 7% PIX)</span>}
               </div>
 
-              <div className="savings-highlight" style={{ fontSize: 11, margin: "12px 0 0" }}>
-                💰 Economia de <strong>R$ {(kitCompare * selectedQty - kitPrice * selectedQty).toFixed(2)}</strong>
+              {/* Selos de confiança */}
+              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 7 }}>
+                {[
+                  { icon: "🔒", text: "Compra 100% segura e criptografada" },
+                  { icon: "🚚", text: "Frete grátis · Entrega em 3–8 dias úteis" },
+                  { icon: "🔄", text: "7 dias para troca ou devolução gratuita" },
+                  { icon: "⭐", text: "+15 mil clientes atendidos em todo o Brasil" },
+                ].map(({ icon, text }) => (
+                  <div key={text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--muted)" }}>
+                    <span style={{ fontSize: 15, flexShrink: 0 }}>{icon}</span>
+                    <span>{text}</span>
+                  </div>
+                ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="checkout-footer">
-        <div className="container" style={{ display: "grid", gap: 12, justifyContent: "center", justifyItems: "center", padding: "24px 16px" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px", justifyContent: "center", fontSize: 12, color: "var(--muted)" }}>
-            <span>🔒 Compra 100% segura</span>
-            <span>🛡️ Dados protegidos com criptografia SSL</span>
-            <span>✅ Pagamento processado com segurança</span>
-            <span>📞 Atendimento via WhatsApp</span>
-          </div>
-          <div style={{ fontSize: 12, color: "#7d6320", textAlign: "center" }}>
-            <strong>⭐ Satisfação Garantida</strong> — 7 dias para trocas. Seu dinheiro de volta se não ficar satisfeito.
-          </div>
-          <div style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
-            <strong>+15 mil</strong> clientes atendidos em todo o Brasil
-          </div>
+      <footer style={{ background: "#011843", color: "rgba(255,255,255,0.82)", padding: "48px 0 48px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 12, padding: "0 24px" }}>
+          <img src="/images/ZevbLkVeF2gs.svg" alt="Amex"        width="46" height="30" />
+          <img src="/images/ArGWVJHpgYvU.svg" alt="Visa"        width="46" height="30" />
+          <img src="/images/0ovYmYCaKmvG.svg" alt="Diners Club" width="46" height="30" />
+          <img src="/images/q0kdVVG0rtRH.svg" alt="Mastercard"  width="46" height="30" />
+          <img src="/images/pYoM0lYcIBRp.svg" alt="Discover"   width="46" height="30" />
+          <img src="/images/R8kYc3JGxQCa.svg" alt="Aura"       width="46" height="30" />
+          <img src="/images/PSdsna7V1PGI.svg" alt="Elo"         width="46" height="30" />
+          <img src="/images/fGHGNLPt08me.svg" alt="Hiper"       width="46" height="30" />
+          <img src="/images/9zS7PqYNCPfs.svg" alt="Pix"         width="46" height="30" />
         </div>
-        <p>© {new Date().getFullYear()} Triunfo Home Design. Todos os direitos reservados.</p>
-      </div>
+        <div style={{
+          display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center",
+          gap: "8px 32px", marginTop: 36, padding: "24px 24px 0",
+          borderTop: "1px solid rgba(255,255,255,0.16)",
+          fontSize: 11, textAlign: "center",
+        }}>
+          <span>Compra protegida por criptografia SSL.</span>
+          <small>© {new Date().getFullYear()} Triunfo Home Design. Todos os direitos reservados.</small>
+        </div>
+      </footer>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(0.85); }
+        }
+      `}</style>
     </div>
   );
 }

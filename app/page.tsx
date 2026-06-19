@@ -647,8 +647,32 @@ window.__cepShow=function(h,t){var e=document.getElementById("shipping-result");
 window.__cepCalc=function(){var i=document.getElementById("cep-calc"),b=document.getElementById("cep-calc-btn"),c=window.__d(i.value);if(c.length!==8){window.__cepShow("Digite um CEP v\u00e1lido com 8 d\u00edgitos.","error");return}b.disabled=true;b.textContent="...";window.__cepShow("Consultando...","success");var x=new XMLHttpRequest,to=setTimeout(function(){x.abort()},6000);x.open("GET","https://viacep.com.br/ws/"+c+"/json/",true);x.onload=function(){clearTimeout(to);b.disabled=false;b.textContent="Calcular";try{var d=JSON.parse(x.responseText),l=(!d.erro&&d.localidade)?d.localidade+(d.uf?" - "+d.uf:""):"";window.__cepShow(window.__S+" "+(l?'para <strong>'+l+"</strong>":"para o seu endere\u00e7o")+window.__E,"success")}catch(e){window.__cepShow(window.__S+" para o seu endere\u00e7o"+window.__E,"success")}};x.onerror=function(){clearTimeout(to);b.disabled=false;b.textContent="Calcular";window.__cepShow(window.__S+" para o seu endere\u00e7o"+window.__E,"success")};x.send()};\
 </script>\
 ` }} />
-      <script src="/js/AxVL7LwBujgu.js?v=3" defer></script>
-      <script src="/js/yFVPl407oWCP.js?v=3" defer></script>
+      <script src="/js/AxVL7LwBujgu.js?v=4" defer></script>
+      <script src="/js/yFVPl407oWCP.js?v=4" defer></script>
+
+      {/* ViewContent — dispara quando a página do produto carrega */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function () {
+          function doViewContent() {
+            if (window.THD && typeof window.THD.fireEvent === 'function') {
+              window.THD.fireEvent('ViewContent', {
+                value: 109.90,
+                currency: 'BRL',
+                content_ids: ['flexhome-armario-multifuncional'],
+                content_type: 'product',
+                content_name: 'FlexHome - Armário Multifuncional',
+              });
+            } else {
+              setTimeout(doViewContent, 300);
+            }
+          }
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () { setTimeout(doViewContent, 600); });
+          } else {
+            setTimeout(doViewContent, 600);
+          }
+        })();
+      `}} />
     </>
   );
 }

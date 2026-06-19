@@ -297,16 +297,46 @@
       });
     }
 
+    var VARIANT_COLOR_MAP = {
+      "2 Pretos":           { colorId: "2-pretos",    colorName: "2 Pretos"         },
+      "2 Brancos":          { colorId: "2-brancos",   colorName: "2 Brancos"        },
+      "1 Preto e 1 Branco": { colorId: "preto-branco",colorName: "1 Preto e 1 Branco" }
+    };
+
+    function applyVariant(v) {
+      selection.variant = v;
+      var map = VARIANT_COLOR_MAP[v];
+      if (map) {
+        selection.color.id   = map.colorId;
+        selection.color.name = map.colorName;
+      }
+      var url = purchaseUrl(currentItem());
+      var buyNowEl    = byId("buy-now");
+      var stickyBuyEl = byId("sticky-buy");
+      if (buyNowEl)    buyNowEl.setAttribute("href", url);
+      if (stickyBuyEl) stickyBuyEl.setAttribute("href", url);
+    }
+
+    /* sincroniza com o valor inicial do select */
     var variantSel = byId("variant-select");
     if (variantSel) {
-      variantSel.addEventListener("change", function () { selection.variant = this.value; });
+      applyVariant(variantSel.value || selection.variant);
+      variantSel.addEventListener("change", function () { applyVariant(this.value); });
+    }
+
+    function navigateToPurchase(e) {
+      e.preventDefault();
+      /* Garante que o valor atual do select é sempre sincronizado antes de navegar */
+      var vs = byId("variant-select");
+      if (vs && vs.value) applyVariant(vs.value);
+      goToPurchase();
     }
 
     var buyNow = byId("buy-now");
-    if (buyNow) buyNow.addEventListener("click", goToPurchase);
+    if (buyNow) buyNow.addEventListener("click", navigateToPurchase);
 
     var stickyBuy = byId("sticky-buy");
-    if (stickyBuy) stickyBuy.addEventListener("click", goToPurchase);
+    if (stickyBuy) stickyBuy.addEventListener("click", navigateToPurchase);
 
     byId("close-cart") && byId("close-cart").addEventListener("click", closeCart);
     byId("cart-backdrop") && byId("cart-backdrop").addEventListener("click", closeCart);
