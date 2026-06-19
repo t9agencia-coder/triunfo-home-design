@@ -1,20 +1,11 @@
-import { Redis } from "@upstash/redis";
-
-let _client: Redis | null = null;
-
-function getClient(): Redis | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
-  if (!_client) {
-    _client = new Redis({
-      url:   process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-  }
-  return _client;
-}
-
-const SESSION_TTL = 60 * 60 * 24 * 7; // 7 dias
-const DEDUP_TTL   = 60 * 60 * 24;     // 24 horas
+/**
+ * Módulo de sessão — implementado sobre Supabase Postgres.
+ * Substitui a dependência do Upstash Redis.
+ *
+ * Tabelas necessárias (rodar uma vez no SQL Editor do Supabase):
+ *   -- ver lib/supabase-schema.sql
+ */
+import { getSupabase } from "./supabase";
 
 export interface SessionData {
   fbp?:          string;
@@ -29,69 +20,93 @@ export interface SessionData {
   user_agent?:   string;
   landing_page?: string;
   referer?:      string;
-  /* PII hashado (armazenado quando AddToCart é disparado) */
-  pii?: Record<string, string[]>;
-  created_at?: string;
+  pii?:          Record<string, string[]>;
+  created_at?:   string;
+  updated_at?:   string;
 }
 
 export async function saveSession(sessionId: string, data: Partial<SessionData>): Promise<void> {
-  const r = getClient();
-  if (!r) return;
+  const sb = getSupabase();
+  if (!sb) return;
   try {
-    const existing = await getSession(sessionId);
-    const merged = { ...existing, ...data, updated_at: new Date().toISOString() };
+    const { data: row } = await sb
+      .from("thd_sessions")
+      .select("data")
+      .eq("session_id", sessionId)
+      .maybeSingle();
+
+    const existing = (row?.data ?? {}) as SessionData;
+    const merged: SessionData = {
+      ...existing,
+      ...data,
+      updated_at: new Date().toISOString(),
+    };
     if (!merged.created_at) merged.created_at = new Date().toISOString();
-    await r.set(`session:${sessionId}`, JSON.stringify(merged), { ex: SESSION_TTL });
+
+    await sb.from("thd_sessions").upsert(
+      { session_id: sessionId, data: merged },
+      { onConflict: "session_id" }
+    );
   } catch (e) {
-    console.error("[redis] saveSession error:", e);
+    console.error("[supabase] saveSession:", e);
   }
 }
 
 export async function getSession(sessionId: string): Promise<SessionData | null> {
-  const r = getClient();
-  if (!r) return null;
+  const sb = getSupabase();
+  if (!sb) return null;
   try {
-    const raw = await r.get<unknown>(`session:${sessionId}`);
-    if (!raw) return null;
-    return typeof raw === "string" ? JSON.parse(raw) : (raw as SessionData);
+    const { data: row } = await sb
+      .from("thd_sessions")
+      .select("data")
+      .eq("session_id", sessionId)
+      .maybeSingle();
+    return (row?.data as SessionData) ?? null;
   } catch (e) {
-    console.error("[redis] getSession error:", e);
+    console.error("[supabase] getSession:", e);
     return null;
   }
 }
 
 export async function linkTransactionToSession(transactionId: string, sessionId: string): Promise<void> {
-  const r = getClient();
-  if (!r) return;
+  const sb = getSupabase();
+  if (!sb) return;
   try {
-    await r.set(`txn:${transactionId}`, sessionId, { ex: SESSION_TTL });
+    await sb.from("thd_txn_sessions").upsert(
+      { transaction_id: transactionId, session_id: sessionId },
+      { onConflict: "transaction_id" }
+    );
   } catch (e) {
-    console.error("[redis] linkTransaction error:", e);
+    console.error("[supabase] linkTransaction:", e);
   }
 }
 
 export async function getSessionByTransaction(transactionId: string): Promise<SessionData | null> {
-  const r = getClient();
-  if (!r) return null;
+  const sb = getSupabase();
+  if (!sb) return null;
   try {
-    const sessionId = await r.get<string>(`txn:${transactionId}`);
-    if (!sessionId) return null;
-    return getSession(typeof sessionId === "string" ? sessionId : String(sessionId));
+    const { data: row } = await sb
+      .from("thd_txn_sessions")
+      .select("session_id")
+      .eq("transaction_id", transactionId)
+      .maybeSingle();
+    if (!row?.session_id) return null;
+    return getSession(row.session_id as string);
   } catch (e) {
-    console.error("[redis] getSessionByTransaction error:", e);
+    console.error("[supabase] getSessionByTransaction:", e);
     return null;
   }
 }
 
-/** Retorna true se o eventId já foi processado (duplicado), false se é novo. */
+/** Retorna true se o eventId já foi processado (duplicado). */
 export async function checkAndMarkDedup(eventId: string): Promise<boolean> {
-  const r = getClient();
-  if (!r) return false;
+  const sb = getSupabase();
+  if (!sb) return false;
   try {
-    const result = await r.set(`dedup:${eventId}`, "1", { ex: DEDUP_TTL, nx: true });
-    return result === null; // null = chave já existia = duplicado
-  } catch (e) {
-    console.error("[redis] dedup error:", e);
+    const { error } = await sb.from("thd_dedup").insert({ event_id: eventId });
+    if (error?.code === "23505") return true; // violação de unique = duplicado
+    return false;
+  } catch {
     return false;
   }
 }

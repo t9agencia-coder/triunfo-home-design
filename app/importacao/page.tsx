@@ -26,13 +26,12 @@ const STEPS = [
   { label: "Entrega", sub: ""          },
 ];
 
-const SUCCESS_IMG = "/images/upsell/importacao/success.gif";
-const FAILED_IMG  = "/images/upsell/importacao/failed.gif";
+
 
 export default function ImportacaoPage() {
   const router = useRouter();
   const [steps,          setSteps]          = useState<StepState[]>(["pending","pending","pending","pending"]);
-  const [stepImgs,       setStepImgs]       = useState<string[]>(["","","",""]);
+
   const [alertVisible,   setAlertVisible]   = useState(false);
   const [btnEnabled,     setBtnEnabled]     = useState(false);
   const [modalOpen,      setModalOpen]      = useState(false);
@@ -104,8 +103,7 @@ export default function ImportacaoPage() {
     setSteps(p => { const n=[...p] as StepState[]; n[index]="active"; return n; });
     setTimeout(() => {
       setSteps(p => { const n=[...p] as StepState[]; n[index]=result; return n; });
-      setStepImgs(p => { const n=[...p]; n[index]=result==="success"?SUCCESS_IMG:FAILED_IMG; return n; });
-      cb();
+        cb();
     }, 900);
   }
 
@@ -182,9 +180,7 @@ export default function ImportacaoPage() {
                       boxShadow: state==="active" ? `0 0 0 5px ${OM}` : state==="failed" ? "0 0 0 5px #fee2e2" : "none",
                       transition:"all .4s ease",
                     }}>
-                      {(state==="success"||state==="failed") && stepImgs[i] ? (
-                        <img src={stepImgs[i]} alt="" style={{ width:26, height:26 }} />
-                      ) : state==="success" ? (
+                      {state==="success" ? (
                         <span style={{ color:"white", fontSize:18, fontWeight:700 }}>✓</span>
                       ) : state==="failed" ? (
                         <span style={{ color:"white", fontSize:18, fontWeight:700 }}>✗</span>
