@@ -84,7 +84,7 @@ export default function ImportacaoPage() {
 
       sessionStorage.setItem("pixPaymentData", JSON.stringify(pixPaymentData))
       sessionStorage.setItem("acquirerSlug", data.acquirerSlug || "blackpay")
-      sessionStorage.setItem("funnelNext", "/frete")
+      sessionStorage.setItem("funnelNext", "/tenf")
       sessionStorage.setItem("paymentContext", JSON.stringify({
         type: "upsell",
         title: "Taxa de Desembaraço Aduaneiro",

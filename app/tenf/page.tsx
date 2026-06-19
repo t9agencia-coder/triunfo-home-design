@@ -65,7 +65,7 @@ export default function TenfPage() {
 
       sessionStorage.setItem("pixPaymentData", JSON.stringify(pixPaymentData))
       sessionStorage.setItem("acquirerSlug", data.acquirerSlug || "blackpay")
-      sessionStorage.setItem("funnelNext", "/importacao")
+      sessionStorage.setItem("funnelNext", "/frete")
       sessionStorage.setItem("paymentContext", JSON.stringify({
         type: "upsell",
         title: "Taxa de Emissão de Nota Fiscal (TENF)",
