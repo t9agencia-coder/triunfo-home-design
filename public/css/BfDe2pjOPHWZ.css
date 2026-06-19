@@ -2941,6 +2941,76 @@ fieldset {
   font-size: 13px;
 }
 
+@media (max-width: 860px) {
+  .product-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery {
+    position: static;
+    max-width: 520px;
+    margin-inline: auto;
+  }
+
+  .gallery-main {
+    border-radius: 20px;
+  }
+
+  .gallery-main > img {
+    object-fit: contain;
+    background: #f5f5f5;
+  }
+
+  .badge-accent {
+    right: 10px;
+    font-size: 10px;
+    padding: 5px 10px;
+    top: 10px;
+  }
+
+  .gallery-arrow {
+    width: 36px;
+    height: 36px;
+    opacity: 1;
+  }
+
+  .gallery-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .gallery-prev {
+    left: 8px;
+  }
+
+  .gallery-next {
+    right: 8px;
+  }
+
+  .thumbnail {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-main {
+    border-radius: 14px;
+  }
+
+  .thumbnail {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+  }
+
+  .thumbnails {
+    gap: 6px;
+    margin-top: 10px;
+  }
+}
+
 @media (max-width: 560px) {
   .legal-company dl {
     grid-template-columns: 1fr;
